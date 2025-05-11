@@ -1,74 +1,153 @@
 package auth
 
 import (
-	context "context"
+	"fmt"
 	"log"
-	"time"
+	"net/http"
 	"os"
+	"strings"
+	"time"
 
-	"gorm.io/gorm"
 	"github.com/golang-jwt/jwt/v4"
-
-	pb "github.com/nais2008/final_project_go_yandex/proto/gen/go/sso"
-	"github.com/nais2008/final_project_go_yandex/internal/utils"
+	"github.com/labstack/echo/v4"
 	"github.com/nais2008/final_project_go_yandex/internal/models"
+	"github.com/nais2008/final_project_go_yandex/internal/utils"
+	"github.com/nais2008/final_project_go_yandex/internal/protos/gen/go/sso"
+	"gorm.io/gorm"
 )
 
-// ServiceServer  ...
-type ServiceServer  struct {
-	pb.UnimplementedAuthServiceServer
-	DB *gorm.DB
+type AuthHandler struct {
+	gormDB    *gorm.DB
+	jwtSecret []byte
 }
 
-// Register ...
-func (s *ServiceServer ) Register(ctx context.Context, req *pb.RegisterRequest) (*pb.RegisterResponse, error) {
-	log.Println("Register request received:", req)
+func NewAuthHandler(gormDB *gorm.DB) *AuthHandler {
+	jwtSecret := []byte(os.Getenv("JWT_TOKEN"))
+	if len(jwtSecret) == 0 {
+		log.Fatal("JWT_TOKEN environment variable not set")
+	}
+	return &AuthHandler{
+		gormDB:    gormDB,
+		jwtSecret: jwtSecret,
+	}
+}
 
-	hashedPassword, err := utils.HashPassword(req.Password)
+func (h *AuthHandler) RegisterHandler(c echo.Context) error {
+	if err := c.Request().ParseForm(); err != nil {
+		log.Printf("Error parsing form: %v", err)
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid form data")
+	}
+
+	email := c.FormValue("email")
+	username := c.FormValue("username")
+	password := c.FormValue("password")
+
+	log.Printf("Form Values - Email: '%s', Username: '%s', Password: '%s'", email, username, password)
+
+	if email == "" || username == "" || password == "" {
+		return echo.NewHTTPError(http.StatusBadRequest, "All fields are required")
+	}
+
+	hashedPassword, err := utils.HashPassword(password)
 	if err != nil {
-		return nil, err
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to hash password")
 	}
 
 	user := models.User{
-		Username: req.Username,
-		Email: req.Email,
+		Email:    email,
+		Username: username,
 		Password: hashedPassword,
 	}
 
-	if err := s.DB.Create(&user).Error; err != nil {
-		return nil, err
+	result := h.gormDB.Create(&user)
+	if result.Error != nil {
+		log.Printf("Registration failed: %v", result.Error)
+		return echo.NewHTTPError(http.StatusInternalServerError, "Registration failed")
 	}
 
-	return &pb.RegisterResponse{UserId: int64(user.ID)}, nil
+	return c.JSON(http.StatusCreated, proto.RegisterResponse{UserId: int64(user.ID)})
 }
 
-// Login ...
-func (s *ServiceServer ) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginResponse, error) {
-	log.Println("Login request received:", req)
+
+func (h *AuthHandler) LoginHandler(c echo.Context) error {
+	if err := c.Request().ParseForm(); err != nil {
+		log.Printf("Error parsing form: %v", err)
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid form data")
+	}
+
+	login := c.FormValue("login")
+	password := c.FormValue("password")
+
+	log.Printf("Login Form Values - Login: '%s', Password: '%s'", login, password)
+
+	if login == "" || password == "" {
+		return echo.NewHTTPError(http.StatusBadRequest, "Login and password are required")
+	}
 
 	var user models.User
-	if err := s.DB.Where("username = ? OR email = ?", req.Login, req.Login).First(&user).Error; err != nil {
-		return nil, err
-	}
-	if err := utils.ComparePasswords(user.Password, req.Password); err != nil {
-		return nil, err
+	result := h.gormDB.Where("username = ? OR email = ?", login, login).First(&user)
+	if result.Error != nil {
+		if result.Error == gorm.ErrRecordNotFound {
+			return echo.NewHTTPError(http.StatusUnauthorized, "Invalid credentials")
+		}
+		log.Printf("Login query failed: %v", result.Error)
+		return echo.NewHTTPError(http.StatusInternalServerError, "Login failed")
 	}
 
-	secret := os.Getenv("JWT_TOKEN")
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"username": user.Username,
-		"user_id": user.ID,
-		"exp": time.Now().Add(24 * time.Hour).Unix(),
-	})
-	tokenString, err := token.SignedString([]byte(secret))
+	if err := utils.ComparePasswords(user.Password, password); err != nil {
+		return echo.NewHTTPError(http.StatusUnauthorized, "Invalid credentials")
+	}
+
+	token, err := h.generateJWT(int64(user.ID))
 	if err != nil {
-		return nil, err
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to generate JWT")
 	}
 
-	return &pb.LoginResponse{Token: tokenString}, nil
+	return c.JSON(http.StatusOK, proto.LoginResponse{Token: token})
 }
 
-// NewAuthServiceServer ...
-func NewAuthServiceServer(db *gorm.DB) *ServiceServer  {
-	return &ServiceServer {DB: db}
+func (h *AuthHandler) generateJWT(userID int64) (string, error) {
+	claims := jwt.MapClaims{
+		"user_id": userID,
+		"exp":     time.Now().Add(time.Hour * 24).Unix(),
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	return token.SignedString(h.jwtSecret)
+}
+
+func (h *AuthHandler) AuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		tokenStr := c.Request().Header.Get("Authorization")
+		if tokenStr == "" {
+			return echo.NewHTTPError(http.StatusUnauthorized, "Missing authorization header")
+		}
+
+		parts := strings.Split(tokenStr, " ")
+		if len(parts) != 2 || parts[0] != "Bearer" {
+			return echo.NewHTTPError(http.StatusUnauthorized, "Invalid token format")
+		}
+		tokenStr = parts[1]
+
+		token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
+			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+			}
+			return h.jwtSecret, nil
+		})
+
+		if err != nil {
+			return echo.NewHTTPError(http.StatusUnauthorized, "Invalid token")
+		}
+
+		if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+			userIDFloat, ok := claims["user_id"].(float64)
+			if !ok {
+				return echo.NewHTTPError(http.StatusUnauthorized, "Invalid user ID in token")
+			}
+			c.Set("user_id", int64(userIDFloat))
+			return next(c)
+		}
+
+		return echo.NewHTTPError(http.StatusUnauthorized, "Invalid token")
+	}
 }

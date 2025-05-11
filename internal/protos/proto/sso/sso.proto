@@ -63,6 +63,7 @@ message TaskResponse {
   double arg1 = 2;
   double arg2 = 3;
   string operation = 4;
+  int32 operation_time = 5;
 }
 
 message TaskResultRequest {

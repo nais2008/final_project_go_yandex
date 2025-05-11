@@ -378,6 +378,7 @@ type TaskResponse struct {
 	Arg1          float64                `protobuf:"fixed64,2,opt,name=arg1,proto3" json:"arg1,omitempty"`
 	Arg2          float64                `protobuf:"fixed64,3,opt,name=arg2,proto3" json:"arg2,omitempty"`
 	Operation     string                 `protobuf:"bytes,4,opt,name=operation,proto3" json:"operation,omitempty"`
+	OperationTime int32                  `protobuf:"varint,5,opt,name=operation_time,json=operationTime,proto3" json:"operation_time,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -438,6 +439,13 @@ func (x *TaskResponse) GetOperation() string {
 		return x.Operation
 	}
 	return ""
+}
+
+func (x *TaskResponse) GetOperationTime() int32 {
+	if x != nil {
+		return x.OperationTime
+	}
+	return 0
 }
 
 type TaskResultRequest struct {
@@ -561,12 +569,13 @@ const file_sso_sso_proto_rawDesc = "" +
 	"\x06result\x18\x02 \x01(\tR\x06result\x12\x14\n" +
 	"\x05error\x18\x03 \x01(\tR\x05error\"&\n" +
 	"\vTaskRequest\x12\x17\n" +
-	"\auser_id\x18\x01 \x01(\x03R\x06userId\"m\n" +
+	"\auser_id\x18\x01 \x01(\x03R\x06userId\"\x94\x01\n" +
 	"\fTaskResponse\x12\x17\n" +
 	"\atask_id\x18\x01 \x01(\x03R\x06taskId\x12\x12\n" +
 	"\x04arg1\x18\x02 \x01(\x01R\x04arg1\x12\x12\n" +
 	"\x04arg2\x18\x03 \x01(\x01R\x04arg2\x12\x1c\n" +
-	"\toperation\x18\x04 \x01(\tR\toperation\"D\n" +
+	"\toperation\x18\x04 \x01(\tR\toperation\x12%\n" +
+	"\x0eoperation_time\x18\x05 \x01(\x05R\roperationTime\"D\n" +
 	"\x11TaskResultRequest\x12\x17\n" +
 	"\atask_id\x18\x01 \x01(\x03R\x06taskId\x12\x16\n" +
 	"\x06result\x18\x02 \x01(\x01R\x06result\",\n" +

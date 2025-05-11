@@ -2,129 +2,149 @@ package agent
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"time"
 
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/metadata"
-
 	"github.com/nais2008/final_project_go_yandex/internal/config"
-	"github.com/nais2008/final_project_go_yandex/internal/models"
-	proto "github.com/nais2008/final_project_go_yandex/internal/protos/gen/go/sso"
-	"os"
+	"github.com/nais2008/final_project_go_yandex/internal/models" // Возможно, вам потребуется своя структура Task
+	pb "github.com/nais2008/final_project_go_yandex/internal/protos/gen/go/sso"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
-// Agent ...
+// Agent представляет собой gRPC-клиента агента.
 type Agent struct {
-	cfg    config.Config
-	client proto.AgentServiceClient
-	conn   *grpc.ClientConn
-	token  string
+	cfg config.Config
+	orchestratorClient pb.OrchestratorServiceClient
 }
 
-// NewAgent ...
+// NewAgent создает новый экземпляр gRPC-агента.
 func NewAgent(cfg config.Config) *Agent {
-	conn, err := grpc.Dial(cfg.GrpcServerAddr, grpc.WithInsecure(), grpc.WithBlock())
+	conn, err := grpc.Dial(cfg.GrpcServerAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		log.Fatalf("could not connect to gRPC server: %v", err)
+		log.Fatalf("Agent failed to connect to Orchestrator gRPC server at %s: %v", cfg.GrpcServerAddr, err)
 	}
-	client := proto.NewAgentServiceClient(conn)
-
-	token := os.Getenv("JWT_TOKEN")
-	if token == "" {
-		log.Fatalf("JWT_TOKEN must be set in environment")
+	client := pb.NewOrchestratorServiceClient(conn)
+	return &Agent{
+		cfg:                cfg,
+		orchestratorClient: client,
 	}
-
-	ag := &Agent{
-		cfg:    cfg,
-		client: client,
-		conn:   conn,
-		token:  token,
-	}
-
-	return ag
 }
 
-// Run ...
-func (a *Agent) Run() error {
-	defer a.conn.Close()
+// Run запускает основной цикл работы gRPC-агента.
+func (a *Agent) Run() {
+	log.Printf("gRPC Agent started. Connecting to Orchestrator at: %s", a.cfg.GrpcServerAddr)
+	pollInterval := time.Second * 5 // Значение по умолчанию
+	// Попробуйте получить интервал опроса из конфигурации (если добавите его)
+	// if a.cfg.AgentPollInterval != 0 {
+	// 	pollInterval = a.cfg.AgentPollInterval
+	// }
+	log.Printf("Task poll interval: %s", pollInterval)
+
 	for {
 		task, err := a.getTask()
 		if err != nil {
-			log.Printf("error getting task: %v", err)
-			time.Sleep(1 * time.Second)
-			continue
-		}
-		if task.ID == 0 {
-			time.Sleep(1 * time.Second)
+			log.Printf("Error getting task: %v", err)
+			time.Sleep(pollInterval)
 			continue
 		}
 
-		result := a.ComputeTask(task)
-		a.submitResult(int(task.ID), result)
-
-		time.Sleep(time.Duration(task.OperationTime) * time.Millisecond)
+		if task != nil && task.ID != 0 {
+			log.Printf("Received task: %+v", task)
+			result, err := a.ComputeTask(task)
+			if err != nil {
+				log.Printf("Error computing task %d: %v", task.ID, err)
+				a.submitResult(task.ID, 0) // Отправляем результат 0, оркестратор должен обработать ошибку по статусу
+			} else {
+				a.submitResult(task.ID, result)
+			}
+			time.Sleep(time.Duration(task.OperationTime) * time.Millisecond) // Уважаем OperationTime
+		} else {
+			log.Println("No tasks available. Sleeping...")
+			time.Sleep(pollInterval)
+		}
 	}
 }
 
-func (a *Agent) getTask() (models.Task, error) {
+// getTask запрашивает новую задачу у оркестратора через gRPC.
+func (a *Agent) getTask() (*models.Task, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
-	ctx = metadata.AppendToOutgoingContext(ctx, "authorization", "Bearer "+a.token)
-
-	resp, err := a.client.GetTask(ctx, &proto.TaskRequest{})
-	if err != nil {
-		return models.Task{}, err
+	req := &pb.TaskRequest{
+		UserId: 1, // Вам может потребоваться передавать фактический UserID, если это необходимо
 	}
 
-	return models.Task{
-		ID:        uint(resp.TaskId),
-		Arg1:      resp.Arg1,
-		Arg2:      floatPointer(resp.Arg2),
-		Operation: resp.Operation,
-	}, nil
+	resp, err := a.orchestratorClient.GetTask(ctx, req)
+	if err != nil {
+		return nil, logError("Error calling GetTask gRPC service", err)
+	}
+
+	if resp.TaskId == 0 {
+		return nil, nil // Нет доступных задач
+	}
+
+	task := &models.Task{
+		ID:            uint(resp.TaskId),
+		Arg1:          resp.Arg1,
+		Operation:     resp.Operation,
+		OperationTime: int(resp.OperationTime),
+	}
+	if resp.Arg2 != 0 {
+		task.Arg2 = &resp.Arg2
+	}
+
+	return task, nil
 }
 
-func floatPointer(f float64) *float64 {
-	return &f
-}
-
-// ComputeTask ...
-func (a *Agent) ComputeTask(task models.Task) float64 {
+// ComputeTask выполняет вычисление для заданной задачи.
+func (a *Agent) ComputeTask(task *models.Task) (float64, error) {
+	log.Printf("Computing task %d: %f %s %v", task.ID, task.Arg1, task.Operation, task.Arg2)
 	if task.Arg2 == nil {
-		return task.Arg1
+		return task.Arg1, nil
 	}
 	switch task.Operation {
 	case "+":
-		return task.Arg1 + *task.Arg2
+		return task.Arg1 + *task.Arg2, nil
 	case "-":
-		return task.Arg1 - *task.Arg2
+		return task.Arg1 - *task.Arg2, nil
 	case "*":
-		return task.Arg1 * *task.Arg2
+		return task.Arg1 * *task.Arg2, nil
 	case "/":
 		if *task.Arg2 == 0 {
-			return 0
+			return 0, logError("Division by zero", nil)
 		}
-		return task.Arg1 / *task.Arg2
+		return task.Arg1 / *task.Arg2, nil
 	default:
-		return 0
+		return 0, logError("Unknown operation", nil)
 	}
 }
 
-func (a *Agent) submitResult(taskID int, result float64) {
+// submitResult отправляет результат выполненной задачи обратно оркестратору через gRPC.
+func (a *Agent) submitResult(taskID uint, result float64) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
-	ctx = metadata.AppendToOutgoingContext(ctx, "authorization", "Bearer "+a.token)
-
-	req := &proto.TaskResultRequest{
+	req := &pb.TaskResultRequest{
 		TaskId: int64(taskID),
 		Result: result,
 	}
 
-	_, err := a.client.SubmitTaskResult(ctx, req)
+	_, err := a.orchestratorClient.SubmitTaskResult(ctx, req)
 	if err != nil {
-		log.Printf("error submitting result for task %d: %v", taskID, err)
+		return logError(fmt.Sprintf("Error calling SubmitTaskResult gRPC service for task %d", taskID), err)
 	}
+
+	log.Printf("Successfully submitted result for task %d: Result=%f", taskID, result)
+	return nil
+}
+
+func logError(message string, err error) error {
+	if err != nil {
+		log.Printf("%s: %v", message, err)
+		return fmt.Errorf("%s: %w", message, err)
+	}
+	log.Println(message)
+	return fmt.Errorf(message)
 }
