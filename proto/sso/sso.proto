@@ -1,0 +1,75 @@
+syntax = "proto3";
+package orchestrator_agent;
+
+option go_package = "github.com/nais2008/final_project_go_yandex/proto";
+
+// Сервис для аутентификации пользователей (регистрация и авторизация)
+service AuthService {
+  rpc Register (RegisterRequest) returns (RegisterResponse);
+  rpc Login (LoginRequest) returns (LoginResponse);
+}
+
+// Сервис оркестратора для работы с выражениями
+service OrchestratorService {
+  rpc SubmitExpression (ExpressionRequest) returns (ExpressionResponse);
+  rpc GetTask (TaskRequest) returns (TaskResponse);
+  rpc SubmitTaskResult (TaskResultRequest) returns (TaskResultResponse);
+}
+
+// Сервис агента для выполнения задач
+service AgentService {
+  rpc GetTask (TaskRequest) returns (TaskResponse);
+  rpc SubmitTaskResult (TaskResultRequest) returns (TaskResultResponse);
+}
+
+// Сообщения для аутентификации
+message RegisterRequest {
+  string email = 1;
+  string username = 2;
+  string password = 3;
+}
+
+message RegisterResponse {
+  int64 user_id = 1;
+}
+
+message LoginRequest {
+  string login = 1;
+  string password = 2;
+}
+
+message LoginResponse {
+  string token = 1;
+}
+
+// Сообщения для работы с выражениями (Оркестратор)
+message ExpressionRequest {
+  string expression = 1;
+}
+
+message ExpressionResponse {
+  string status = 1;
+  string result = 2;
+  string error = 3;
+}
+
+// Сообщения для задач (Оркестратор и Агент)
+message TaskRequest {
+  int64 user_id = 1;
+}
+
+message TaskResponse {
+  int64 task_id = 1;
+  double arg1 = 2;
+  double arg2 = 3;
+  string operation = 4;
+}
+
+message TaskResultRequest {
+  int64 task_id = 1;
+  double result = 2;
+}
+
+message TaskResultResponse {
+  string status = 1;
+}

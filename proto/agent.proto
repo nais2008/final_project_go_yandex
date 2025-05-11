@@ -1,3 +1,0 @@
-syntax = "proto3";
-package agent;
-option go_package = "github.com/nais2008/project_go_yandex2/proto";
