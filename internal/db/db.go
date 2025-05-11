@@ -12,7 +12,7 @@ import (
 )
 
 // ConnectDB connected database(psql)
-func ConnectDB() *gorm.db {
+func ConnectDB() *gorm.DB {
 	cfg := config.LoadPostgresConfig()
 
 	dbURL := fmt.Sprintf(
@@ -24,7 +24,7 @@ func ConnectDB() *gorm.db {
 		cfg.DB,
 	)
 
-	db, err := gorm.Open(postgres.Open(dbURL), &gorm.config{})
+	db, err := gorm.Open(postgres.Open(dbURL), &gorm.Config{})
 
 	if err != nil {
 		log.Fatalf("Failed to connect to the database: %v", err)
