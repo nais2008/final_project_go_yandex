@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="keywords" content="calc, calculate, yandex, yandex lyceum, go, golang, echo go, gorm, go gorm"/>
+  <meta name="description" content="Distributed calculator for Yandex Lyceum"/>
+  <title>Calc Yandex.go</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- HTMX -->
+  <script src="https://unpkg.com/htmx.org@2.0.4" crossorigin="anonymous"></script>
+
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body class="bg-gradient-to-r from-blue-50 to-purple-50 min-h-screen flex items-center justify-center">
+  <div class="bg-white shadow-lg rounded-lg p-8 max-w-lg w-full">
+    <h1 class="text-3xl font-bold text-center mb-6 text-purple-700">Distributed Calculator</h1>
+
+    <div id="auth" class="space-y-6">
+      <div class="flex justify-between mb-4">
+        <button onclick="toggleAuth('register')" class="px-4 py-2 bg-blue-600 text-white rounded">Register</button>
+        <button onclick="toggleAuth('login')" class="px-4 py-2 bg-purple-600 text-white rounded">Login</button>
+      </div>
+
+      <div id="registerForm" class="space-y-4 hidden">
+        <h2 class="text-xl font-semibold">Register</h2>
+        <form hx-post="/api/v1/register" hx-target="#auth" hx-swap="outerHTML">
+          <input type="email" name="email" placeholder="Email" required class="w-full p-3 border rounded" />
+          <input type="text" name="username" placeholder="Username" required class="w-full p-3 border rounded" />
+          <input type="password" name="password" placeholder="Password" required class="w-full p-3 border rounded" />
+          <button type="submit" class="w-full py-3 bg-blue-600 text-white rounded">Register</button>
+        </form>
+      </div>
+
+      <div id="loginForm" class="space-y-4 hidden">
+        <h2 class="text-xl font-semibold">Login</h2>
+        <form hx-post="/api/v1/login" hx-target="#auth" hx-swap="outerHTML">
+          <input type="text" name="login" placeholder="Username or Email" required class="w-full p-3 border rounded" />
+          <input type="password" name="password" placeholder="Password" required class="w-full p-3 border rounded" />
+          <button type="submit" class="w-full py-3 bg-purple-600 text-white rounded">Login</button>
+        </form>
+      </div>
+    </div>
+
+    <div id="calculator" class="hidden space-y-6">
+      <h2 class="text-xl font-semibold mb-4">Calculate Expression</h2>
+      <form hx-post="/api/v1/expressions" hx-headers='{"Authorization": "Bearer {token}"}' hx-target="#result" hx-swap="innerHTML">
+        <input type="text" name="expression" placeholder="2+3*4-1/5" required class="w-full p-3 border rounded" />
+        <button type="submit" class="w-full py-3 bg-purple-600 text-white rounded">Compute</button>
+      </form>
+      <div id="result" class="mt-4 text-lg font-medium"></div>
+    </div>
+  </div>
+
+  <script>
+    function toggleAuth(type) {
+      document.getElementById('registerForm').classList.add('hidden');
+      document.getElementById('loginForm').classList.add('hidden');
+      document.getElementById(`${type}Form`).classList.remove('hidden');
+    }
+
+    document.body.addEventListener('htmx:afterRequest', (evt) => {
+      const detail = evt.detail;
+      if (detail.requestConfig && detail.xhr.responseURL.includes('/api/v1/login')) {
+        const res = JSON.parse(detail.xhr.responseText);
+        if (res.token) {
+          window.token = res.token;
+          document.getElementById('auth').classList.add('hidden');
+          document.getElementById('calculator').classList.remove('hidden');
+        } else {
+          alert('Login failed');
+        }
+      }
+    });
+  </script>
+</body>
+</html>

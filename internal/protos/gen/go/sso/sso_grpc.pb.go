@@ -19,8 +19,8 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	AuthService_Register_FullMethodName = "/orchestrator_agent.AuthService/Register"
-	AuthService_Login_FullMethodName    = "/orchestrator_agent.AuthService/Login"
+	AuthService_Register_FullMethodName = "/sso.AuthService/Register"
+	AuthService_Login_FullMethodName    = "/sso.AuthService/Login"
 )
 
 // AuthServiceClient is the client API for AuthService service.
@@ -146,7 +146,7 @@ func _AuthService_Login_Handler(srv interface{}, ctx context.Context, dec func(i
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var AuthService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "orchestrator_agent.AuthService",
+	ServiceName: "sso.AuthService",
 	HandlerType: (*AuthServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -163,9 +163,9 @@ var AuthService_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
-	OrchestratorService_SubmitExpression_FullMethodName = "/orchestrator_agent.OrchestratorService/SubmitExpression"
-	OrchestratorService_GetTask_FullMethodName          = "/orchestrator_agent.OrchestratorService/GetTask"
-	OrchestratorService_SubmitTaskResult_FullMethodName = "/orchestrator_agent.OrchestratorService/SubmitTaskResult"
+	OrchestratorService_SubmitExpression_FullMethodName = "/sso.OrchestratorService/SubmitExpression"
+	OrchestratorService_GetTask_FullMethodName          = "/sso.OrchestratorService/GetTask"
+	OrchestratorService_SubmitTaskResult_FullMethodName = "/sso.OrchestratorService/SubmitTaskResult"
 )
 
 // OrchestratorServiceClient is the client API for OrchestratorService service.
@@ -324,7 +324,7 @@ func _OrchestratorService_SubmitTaskResult_Handler(srv interface{}, ctx context.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var OrchestratorService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "orchestrator_agent.OrchestratorService",
+	ServiceName: "sso.OrchestratorService",
 	HandlerType: (*OrchestratorServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -345,8 +345,8 @@ var OrchestratorService_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
-	AgentService_GetTask_FullMethodName          = "/orchestrator_agent.AgentService/GetTask"
-	AgentService_SubmitTaskResult_FullMethodName = "/orchestrator_agent.AgentService/SubmitTaskResult"
+	AgentService_GetTask_FullMethodName          = "/sso.AgentService/GetTask"
+	AgentService_SubmitTaskResult_FullMethodName = "/sso.AgentService/SubmitTaskResult"
 )
 
 // AgentServiceClient is the client API for AgentService service.
@@ -472,7 +472,7 @@ func _AgentService_SubmitTaskResult_Handler(srv interface{}, ctx context.Context
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var AgentService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "orchestrator_agent.AgentService",
+	ServiceName: "sso.AgentService",
 	HandlerType: (*AgentServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{

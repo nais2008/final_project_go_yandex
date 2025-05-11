@@ -540,7 +540,7 @@ var File_sso_sso_proto protoreflect.FileDescriptor
 
 const file_sso_sso_proto_rawDesc = "" +
 	"\n" +
-	"\rsso/sso.proto\x12\x12orchestrator_agent\"_\n" +
+	"\rsso/sso.proto\x12\x03sso\"_\n" +
 	"\x0fRegisterRequest\x12\x14\n" +
 	"\x05email\x18\x01 \x01(\tR\x05email\x12\x1a\n" +
 	"\busername\x18\x02 \x01(\tR\busername\x12\x1a\n" +
@@ -571,17 +571,17 @@ const file_sso_sso_proto_rawDesc = "" +
 	"\atask_id\x18\x01 \x01(\x03R\x06taskId\x12\x16\n" +
 	"\x06result\x18\x02 \x01(\x01R\x06result\",\n" +
 	"\x12TaskResultResponse\x12\x16\n" +
-	"\x06status\x18\x01 \x01(\tR\x06status2\xb2\x01\n" +
-	"\vAuthService\x12U\n" +
-	"\bRegister\x12#.orchestrator_agent.RegisterRequest\x1a$.orchestrator_agent.RegisterResponse\x12L\n" +
-	"\x05Login\x12 .orchestrator_agent.LoginRequest\x1a!.orchestrator_agent.LoginResponse2\xa9\x02\n" +
-	"\x13OrchestratorService\x12a\n" +
-	"\x10SubmitExpression\x12%.orchestrator_agent.ExpressionRequest\x1a&.orchestrator_agent.ExpressionResponse\x12L\n" +
-	"\aGetTask\x12\x1f.orchestrator_agent.TaskRequest\x1a .orchestrator_agent.TaskResponse\x12a\n" +
-	"\x10SubmitTaskResult\x12%.orchestrator_agent.TaskResultRequest\x1a&.orchestrator_agent.TaskResultResponse2\xbf\x01\n" +
-	"\fAgentService\x12L\n" +
-	"\aGetTask\x12\x1f.orchestrator_agent.TaskRequest\x1a .orchestrator_agent.TaskResponse\x12a\n" +
-	"\x10SubmitTaskResult\x12%.orchestrator_agent.TaskResultRequest\x1a&.orchestrator_agent.TaskResultResponseB3Z1github.com/nais2008/final_project_go_yandex/protob\x06proto3"
+	"\x06status\x18\x01 \x01(\tR\x06status2v\n" +
+	"\vAuthService\x127\n" +
+	"\bRegister\x12\x14.sso.RegisterRequest\x1a\x15.sso.RegisterResponse\x12.\n" +
+	"\x05Login\x12\x11.sso.LoginRequest\x1a\x12.sso.LoginResponse2\xcf\x01\n" +
+	"\x13OrchestratorService\x12C\n" +
+	"\x10SubmitExpression\x12\x16.sso.ExpressionRequest\x1a\x17.sso.ExpressionResponse\x12.\n" +
+	"\aGetTask\x12\x10.sso.TaskRequest\x1a\x11.sso.TaskResponse\x12C\n" +
+	"\x10SubmitTaskResult\x12\x16.sso.TaskResultRequest\x1a\x17.sso.TaskResultResponse2\x83\x01\n" +
+	"\fAgentService\x12.\n" +
+	"\aGetTask\x12\x10.sso.TaskRequest\x1a\x11.sso.TaskResponse\x12C\n" +
+	"\x10SubmitTaskResult\x12\x16.sso.TaskResultRequest\x1a\x17.sso.TaskResultResponseB<Z:github.com/nais2008/final_project_go_yandex/internal/protob\x06proto3"
 
 var (
 	file_sso_sso_proto_rawDescOnce sync.Once
@@ -597,32 +597,32 @@ func file_sso_sso_proto_rawDescGZIP() []byte {
 
 var file_sso_sso_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
 var file_sso_sso_proto_goTypes = []any{
-	(*RegisterRequest)(nil),    // 0: orchestrator_agent.RegisterRequest
-	(*RegisterResponse)(nil),   // 1: orchestrator_agent.RegisterResponse
-	(*LoginRequest)(nil),       // 2: orchestrator_agent.LoginRequest
-	(*LoginResponse)(nil),      // 3: orchestrator_agent.LoginResponse
-	(*ExpressionRequest)(nil),  // 4: orchestrator_agent.ExpressionRequest
-	(*ExpressionResponse)(nil), // 5: orchestrator_agent.ExpressionResponse
-	(*TaskRequest)(nil),        // 6: orchestrator_agent.TaskRequest
-	(*TaskResponse)(nil),       // 7: orchestrator_agent.TaskResponse
-	(*TaskResultRequest)(nil),  // 8: orchestrator_agent.TaskResultRequest
-	(*TaskResultResponse)(nil), // 9: orchestrator_agent.TaskResultResponse
+	(*RegisterRequest)(nil),    // 0: sso.RegisterRequest
+	(*RegisterResponse)(nil),   // 1: sso.RegisterResponse
+	(*LoginRequest)(nil),       // 2: sso.LoginRequest
+	(*LoginResponse)(nil),      // 3: sso.LoginResponse
+	(*ExpressionRequest)(nil),  // 4: sso.ExpressionRequest
+	(*ExpressionResponse)(nil), // 5: sso.ExpressionResponse
+	(*TaskRequest)(nil),        // 6: sso.TaskRequest
+	(*TaskResponse)(nil),       // 7: sso.TaskResponse
+	(*TaskResultRequest)(nil),  // 8: sso.TaskResultRequest
+	(*TaskResultResponse)(nil), // 9: sso.TaskResultResponse
 }
 var file_sso_sso_proto_depIdxs = []int32{
-	0, // 0: orchestrator_agent.AuthService.Register:input_type -> orchestrator_agent.RegisterRequest
-	2, // 1: orchestrator_agent.AuthService.Login:input_type -> orchestrator_agent.LoginRequest
-	4, // 2: orchestrator_agent.OrchestratorService.SubmitExpression:input_type -> orchestrator_agent.ExpressionRequest
-	6, // 3: orchestrator_agent.OrchestratorService.GetTask:input_type -> orchestrator_agent.TaskRequest
-	8, // 4: orchestrator_agent.OrchestratorService.SubmitTaskResult:input_type -> orchestrator_agent.TaskResultRequest
-	6, // 5: orchestrator_agent.AgentService.GetTask:input_type -> orchestrator_agent.TaskRequest
-	8, // 6: orchestrator_agent.AgentService.SubmitTaskResult:input_type -> orchestrator_agent.TaskResultRequest
-	1, // 7: orchestrator_agent.AuthService.Register:output_type -> orchestrator_agent.RegisterResponse
-	3, // 8: orchestrator_agent.AuthService.Login:output_type -> orchestrator_agent.LoginResponse
-	5, // 9: orchestrator_agent.OrchestratorService.SubmitExpression:output_type -> orchestrator_agent.ExpressionResponse
-	7, // 10: orchestrator_agent.OrchestratorService.GetTask:output_type -> orchestrator_agent.TaskResponse
-	9, // 11: orchestrator_agent.OrchestratorService.SubmitTaskResult:output_type -> orchestrator_agent.TaskResultResponse
-	7, // 12: orchestrator_agent.AgentService.GetTask:output_type -> orchestrator_agent.TaskResponse
-	9, // 13: orchestrator_agent.AgentService.SubmitTaskResult:output_type -> orchestrator_agent.TaskResultResponse
+	0, // 0: sso.AuthService.Register:input_type -> sso.RegisterRequest
+	2, // 1: sso.AuthService.Login:input_type -> sso.LoginRequest
+	4, // 2: sso.OrchestratorService.SubmitExpression:input_type -> sso.ExpressionRequest
+	6, // 3: sso.OrchestratorService.GetTask:input_type -> sso.TaskRequest
+	8, // 4: sso.OrchestratorService.SubmitTaskResult:input_type -> sso.TaskResultRequest
+	6, // 5: sso.AgentService.GetTask:input_type -> sso.TaskRequest
+	8, // 6: sso.AgentService.SubmitTaskResult:input_type -> sso.TaskResultRequest
+	1, // 7: sso.AuthService.Register:output_type -> sso.RegisterResponse
+	3, // 8: sso.AuthService.Login:output_type -> sso.LoginResponse
+	5, // 9: sso.OrchestratorService.SubmitExpression:output_type -> sso.ExpressionResponse
+	7, // 10: sso.OrchestratorService.GetTask:output_type -> sso.TaskResponse
+	9, // 11: sso.OrchestratorService.SubmitTaskResult:output_type -> sso.TaskResultResponse
+	7, // 12: sso.AgentService.GetTask:output_type -> sso.TaskResponse
+	9, // 13: sso.AgentService.SubmitTaskResult:output_type -> sso.TaskResultResponse
 	7, // [7:14] is the sub-list for method output_type
 	0, // [0:7] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name

@@ -15,7 +15,7 @@ type TemplateRenderer struct {
 
 // NewRenderer ...
 func NewRenderer(templateDir string) *TemplateRenderer {
-	templates, err := template.ParseGlob(templateDir + "/*.html")
+	templates, err := template.ParseGlob(templateDir)
 	if err != nil {
 		log.Fatalf("Ошибка загрузки шаблонов: %v", err)
 	}

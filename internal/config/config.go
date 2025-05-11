@@ -15,6 +15,8 @@ type Config struct {
 	TimeMultiplicationMS int
 	TimeDivisionMS       int
 	ComputingPower       int
+	GrpcServerAddr       string
+	OrchestratorAddr 		 string
 }
 
 // PostgresConfig ...
@@ -40,6 +42,8 @@ func LoadConfig() Config {
 		TimeMultiplicationMS: loadEnvInt("TIME_MULTIPLICATIONS_MS", 5000),
 		TimeDivisionMS:       loadEnvInt("TIME_DIVISIONS_MS", 5000),
 		ComputingPower:       loadEnvInt("COMPUTING_POWER", 4),
+		GrpcServerAddr:       loadEnvString("GRPC_SERVER_ADDR", "localhost:50051"),
+		OrchestratorAddr:     loadEnvString("ORCHESTRATOR_ADDR", "localhost:8080"),
 	}
 
 	return cfg
