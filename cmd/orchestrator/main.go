@@ -2,8 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
 	"log"
 	"net"
 	"net/http"
@@ -16,36 +14,45 @@ import (
 	"github.com/nais2008/final_project_go_yandex/internal/config"
 	"github.com/nais2008/final_project_go_yandex/internal/db"
 	"github.com/nais2008/final_project_go_yandex/internal/orchestrator"
+	"github.com/nais2008/final_project_go_yandex/internal/renderer"
 	"github.com/nais2008/final_project_go_yandex/proto"
-
 	"google.golang.org/grpc"
 )
 
+func grpcOrHTTP(grpcSrv *grpc.Server, httpHandler http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.ProtoMajor == 2 && strings.Contains(r.Header.Get("Content-Type"), "application/grpc") {
+			grpcSrv.ServeHTTP(w, r)
+		} else {
+			httpHandler.ServeHTTP(w, r)
+		}
+	})
+}
+
 func main() {
-	// Загружаем конфиг
 	cfgCalc := config.LoadConfig()
-	pgCfg   := config.LoadPostgresConfig()
-	dbConn  := db.ConnectDB(pgCfg)
-	orc     := orchestrator.NewOrchestrator(dbConn, cfgCalc)
+	pgCfg := config.LoadPostgresConfig()
+	gormDB := db.ConnectDB(pgCfg)
+	orcSvc := orchestrator.NewOrchestrator(gormDB, cfgCalc)
 
-	// 1) Запускаем gRPC-сервер Оркестратора на 50051
-	go func() {
-		lis, err := net.Listen("tcp", ":50051")
-		if err != nil {
-			log.Fatalf("gRPC listen failed: %v", err)
-		}
-		grpcSrv := grpc.NewServer()
-		proto.RegisterOrchestratorServiceServer(grpcSrv, orc)
-		log.Println("gRPC server running on :50051")
-		if err := grpcSrv.Serve(lis); err != nil {
-			log.Fatalf("gRPC serve failed: %v", err)
-		}
-	}()
+	grpcSrv := grpc.NewServer()
+	proto.RegisterOrchestratorServiceServer(grpcSrv, orcSvc)
+	proto.RegisterAgentServiceServer(grpcSrv, orcSvc)
 
-	// 2) HTTP-API на порту 80
 	e := echo.New()
 	e.HideBanner = true
 	e.Use(middleware.Logger(), middleware.Recover())
+
+	rt := renderer.NewRenderer("templates")
+	e.Renderer = rt
+
+	e.Static("/static", "static")
+
+
+	e.GET("/", func(c echo.Context) error {
+		// При рендере можно передать CSRF и/или токен, сейчас — пусто
+		return c.Render(http.StatusOK, "base.html", map[string]interface{}{})
+	})
 
 	jwtSecret := os.Getenv("JWT_TOKEN")
 	e.POST("/api/v1/auth/register", func(c echo.Context) error {
@@ -53,7 +60,6 @@ func main() {
 		if err := c.Bind(&req); err != nil {
 			return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 		}
-		// ваша логика регистрации...
 		return c.JSON(http.StatusOK, map[string]interface{}{"user_id": 0})
 	})
 	e.POST("/api/v1/auth/login", func(c echo.Context) error {
@@ -72,33 +78,33 @@ func main() {
 		if err := c.Bind(&body); err != nil {
 			return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 		}
-		resp, err := orc.SubmitExpression(c.Request().Context(), &proto.ExpressionRequest{
+		resp, err := orcSvc.SubmitExpression(c.Request().Context(), &proto.ExpressionRequest{
 			Expression: body.Expression,
 		})
 		if err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 		}
-		// вернём ID выражения
-		var out struct{ ID uint64 }
-		out.ID, _ = strconv.ParseUint(resp.Result, 10, 64)
-		return c.JSON(http.StatusCreated, out)
+		return c.JSON(http.StatusCreated, resp)
 	})
 	api.GET("/expressions", func(c echo.Context) error {
-		list, err := orc.ListExpressionsHTTP(c.Request().Context())
-		if err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-		}
-		return c.JSON(http.StatusOK, list)
+		exprs := []orchestrator.ExpressionWithTasks{}
+		orcSvc.ListHTTP(c, &exprs)
+		return c.JSON(http.StatusOK, exprs)
 	})
 	api.GET("/expressions/:id", func(c echo.Context) error {
-		id := c.Param("id")
-		expr, err := orc.GetExpressionByIDHTTP(c.Request().Context(), id)
-		if err != nil {
-			return echo.NewHTTPError(http.StatusNotFound, err.Error())
-		}
+		var expr orchestrator.ExpressionWithTasks
+		orcSvc.GetByIDHTTP(c, &expr)
 		return c.JSON(http.StatusOK, expr)
 	})
 
-	log.Println("HTTP server running on :80")
-	log.Fatal(e.Start(":80"))
+	// Единый сервер: грэйсфул shutdown опущен
+	handler := grpcOrHTTP(grpcSrv, e)
+	lis, err := net.Listen("tcp", ":80")
+	if err != nil {
+		log.Fatalf("listen :80 failed: %v", err)
+	}
+	log.Println("serving gRPC+HTTP on :80")
+	if err := http.Serve(lis, handler); err != nil {
+		log.Fatalf("serve error: %v", err)
+	}
 }

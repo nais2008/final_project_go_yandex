@@ -19,7 +19,57 @@
   <!-- CSS -->
    <link rel="stylesheet" href="/static/css/style.css">
 </head>
-<body>
-  {{}}
+<body class="bg-gray-100 text-gray-800">
+  <div class="container mx-auto p-6">
+    <h1 class="text-3xl font-bold mb-6">Distributed Calculator</h1>
+
+    <div id="auth" class="space-y-6">
+      <div>
+        <h2 class="text-xl font-semibold mb-2">Register</h2>
+        <form hx-post="/api/v1/auth/register" hx-swap="outerHTML" class="space-y-2">
+          <input type="email" name="email" placeholder="Email" required class="w-full p-2 border rounded" />
+          <input type="text" name="username" placeholder="Username" required class="w-full p-2 border rounded" />
+          <input type="password" name="password" placeholder="Password" required class="w-full p-2 border rounded" />
+          <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded">Register</button>
+        </form>
+      </div>
+      <div>
+        <h2 class="text-xl font-semibold mb-2">Login</h2>
+        <form hx-post="/api/v1/auth/login" hx-swap="outerHTML" class="space-y-2">
+          <input type="text" name="login" placeholder="Username or Email" required class="w-full p-2 border rounded" />
+          <input type="password" name="password" placeholder="Password" required class="w-full p-2 border rounded" />
+          <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded">Login</button>
+        </form>
+      </div>
+    </div>
+
+    <div id="calculator" class="hidden space-y-6">
+      <div>
+        <h2 class="text-xl font-semibold mb-2">Calculate Expression</h2>
+        <form hx-post="/api/v1/expressions" hx-headers='{"Authorization": "Bearer {token}"}' hx-target="#result" hx-swap="innerHTML" class="space-y-2">
+          <input type="text" name="expression" placeholder="2+3*4-1/5" required class="w-full p-2 border rounded" />
+          <button type="submit" class="px-4 py-2 bg-purple-600 text-white rounded">Compute</button>
+        </form>
+        <div id="result" class="mt-4 text-lg font-medium"></div>
+      </div>
+
+      <div>
+        <h2 class="text-xl font-semibold mb-2">Your Expressions</h2>
+        <button hx-get="/api/v1/expressions" hx-target="#list" hx-swap="innerHTML" class="px-4 py-2 bg-gray-600 text-white rounded mb-2">Refresh List</button>
+        <div id="list"></div>
+      </div>
+    </div>
+  </div>
+  <script>
+    document.body.addEventListener('htmx:afterRequest', (evt) => {
+      const detail = evt.detail;
+      if (detail.requestConfig && detail.xhr.responseURL.includes('/api/v1/auth/login')) {
+        const res = JSON.parse(detail.xhr.responseText);
+        window.token = res.token;
+        document.getElementById('auth').classList.add('hidden');
+        document.getElementById('calculator').classList.remove('hidden');
+      }
+    });
+  </script>
 </body>
 </html>
