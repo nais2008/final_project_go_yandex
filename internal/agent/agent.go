@@ -7,15 +7,15 @@ import (
 	"time"
 
 	"github.com/nais2008/final_project_go_yandex/internal/config"
-	"github.com/nais2008/final_project_go_yandex/internal/models" // Возможно, вам потребуется своя структура Task
-	pb "github.com/nais2008/final_project_go_yandex/internal/protos/gen/go/sso"
+	"github.com/nais2008/final_project_go_yandex/internal/models"
+	pb "github.com/nais2008/final_project_go_yandex/internal/protos/gen/go/sso" // <--- ВАЖНО: Проверьте путь
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
 
 // Agent представляет собой gRPC-клиента агента.
 type Agent struct {
-	cfg config.Config
+	cfg                config.Config
 	orchestratorClient pb.OrchestratorServiceClient
 }
 
@@ -35,11 +35,7 @@ func NewAgent(cfg config.Config) *Agent {
 // Run запускает основной цикл работы gRPC-агента.
 func (a *Agent) Run() {
 	log.Printf("gRPC Agent started. Connecting to Orchestrator at: %s", a.cfg.GrpcServerAddr)
-	pollInterval := time.Second * 5 // Значение по умолчанию
-	// Попробуйте получить интервал опроса из конфигурации (если добавите его)
-	// if a.cfg.AgentPollInterval != 0 {
-	// 	pollInterval = a.cfg.AgentPollInterval
-	// }
+	pollInterval := time.Second * 5
 	log.Printf("Task poll interval: %s", pollInterval)
 
 	for {
@@ -55,11 +51,11 @@ func (a *Agent) Run() {
 			result, err := a.ComputeTask(task)
 			if err != nil {
 				log.Printf("Error computing task %d: %v", task.ID, err)
-				a.submitResult(task.ID, 0) // Отправляем результат 0, оркестратор должен обработать ошибку по статусу
+				a.submitResult(task.ID, 0)
 			} else {
 				a.submitResult(task.ID, result)
 			}
-			time.Sleep(time.Duration(task.OperationTime) * time.Millisecond) // Уважаем OperationTime
+			time.Sleep(time.Duration(task.OperationTime) * time.Millisecond)
 		} else {
 			log.Println("No tasks available. Sleeping...")
 			time.Sleep(pollInterval)
@@ -73,12 +69,12 @@ func (a *Agent) getTask() (*models.Task, error) {
 	defer cancel()
 
 	req := &pb.TaskRequest{
-		UserId: 1, // Вам может потребоваться передавать фактический UserID, если это необходимо
+		UserId: 1, // Вам может потребоваться передавать фактический UserID
 	}
 
 	resp, err := a.orchestratorClient.GetTask(ctx, req)
 	if err != nil {
-		return nil, logError("Error calling GetTask gRPC service", err)
+		return nil, fmt.Errorf("error calling GetTask: %w", err)
 	}
 
 	if resp.TaskId == 0 {
@@ -113,11 +109,11 @@ func (a *Agent) ComputeTask(task *models.Task) (float64, error) {
 		return task.Arg1 * *task.Arg2, nil
 	case "/":
 		if *task.Arg2 == 0 {
-			return 0, logError("Division by zero", nil)
+			return 0, fmt.Errorf("division by zero")
 		}
 		return task.Arg1 / *task.Arg2, nil
 	default:
-		return 0, logError("Unknown operation", nil)
+		return 0, fmt.Errorf("unknown operation")
 	}
 }
 
@@ -133,18 +129,9 @@ func (a *Agent) submitResult(taskID uint, result float64) error {
 
 	_, err := a.orchestratorClient.SubmitTaskResult(ctx, req)
 	if err != nil {
-		return logError(fmt.Sprintf("Error calling SubmitTaskResult gRPC service for task %d", taskID), err)
+		return fmt.Errorf("error calling SubmitTaskResult: %w", err)
 	}
 
 	log.Printf("Successfully submitted result for task %d: Result=%f", taskID, result)
 	return nil
-}
-
-func logError(message string, err error) error {
-	if err != nil {
-		log.Printf("%s: %v", message, err)
-		return fmt.Errorf("%s: %w", message, err)
-	}
-	log.Println(message)
-	return fmt.Errorf(message)
 }
