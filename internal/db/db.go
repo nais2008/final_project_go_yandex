@@ -2,7 +2,6 @@ package db
 
 import (
 	"fmt"
-	"log"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -11,8 +10,14 @@ import (
 	"github.com/nais2008/final_project_go_yandex/internal/models"
 )
 
+type Storage struct{
+	db *gorm.DB
+}
+
 // ConnectDB connected database(psql)
-func ConnectDB() *gorm.DB {
+func ConnectDB() (*Storage, error) {
+	const op string = "db.ConnectDB"
+
 	cfg := config.LoadPostgresConfig()
 
 	dbURL := fmt.Sprintf(
@@ -27,7 +32,7 @@ func ConnectDB() *gorm.DB {
 	db, err := gorm.Open(postgres.Open(dbURL), &gorm.Config{})
 
 	if err != nil {
-		log.Fatalf("Failed to connect to the database: %v", err)
+		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
 	if err := db.AutoMigrate(
@@ -36,8 +41,8 @@ func ConnectDB() *gorm.DB {
 		&models.Storage{},
 		&models.Task{},
 	); err != nil {
-		log.Fatalf("Error migrate database: %v", err)
+		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
-	return db
+	return &Storage{db: db}, nil
 }

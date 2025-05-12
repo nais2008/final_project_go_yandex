@@ -21,360 +21,9 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// Сообщения для аутентификации
-type RegisterRequest struct {
+type Task struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Email         string                 `protobuf:"bytes,1,opt,name=email,proto3" json:"email,omitempty"`
-	Username      string                 `protobuf:"bytes,2,opt,name=username,proto3" json:"username,omitempty"`
-	Password      string                 `protobuf:"bytes,3,opt,name=password,proto3" json:"password,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *RegisterRequest) Reset() {
-	*x = RegisterRequest{}
-	mi := &file_sso_sso_proto_msgTypes[0]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *RegisterRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*RegisterRequest) ProtoMessage() {}
-
-func (x *RegisterRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_sso_sso_proto_msgTypes[0]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use RegisterRequest.ProtoReflect.Descriptor instead.
-func (*RegisterRequest) Descriptor() ([]byte, []int) {
-	return file_sso_sso_proto_rawDescGZIP(), []int{0}
-}
-
-func (x *RegisterRequest) GetEmail() string {
-	if x != nil {
-		return x.Email
-	}
-	return ""
-}
-
-func (x *RegisterRequest) GetUsername() string {
-	if x != nil {
-		return x.Username
-	}
-	return ""
-}
-
-func (x *RegisterRequest) GetPassword() string {
-	if x != nil {
-		return x.Password
-	}
-	return ""
-}
-
-type RegisterResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	UserId        int64                  `protobuf:"varint,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *RegisterResponse) Reset() {
-	*x = RegisterResponse{}
-	mi := &file_sso_sso_proto_msgTypes[1]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *RegisterResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*RegisterResponse) ProtoMessage() {}
-
-func (x *RegisterResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_sso_sso_proto_msgTypes[1]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use RegisterResponse.ProtoReflect.Descriptor instead.
-func (*RegisterResponse) Descriptor() ([]byte, []int) {
-	return file_sso_sso_proto_rawDescGZIP(), []int{1}
-}
-
-func (x *RegisterResponse) GetUserId() int64 {
-	if x != nil {
-		return x.UserId
-	}
-	return 0
-}
-
-type LoginRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Login         string                 `protobuf:"bytes,1,opt,name=login,proto3" json:"login,omitempty"`
-	Password      string                 `protobuf:"bytes,2,opt,name=password,proto3" json:"password,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *LoginRequest) Reset() {
-	*x = LoginRequest{}
-	mi := &file_sso_sso_proto_msgTypes[2]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *LoginRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*LoginRequest) ProtoMessage() {}
-
-func (x *LoginRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_sso_sso_proto_msgTypes[2]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use LoginRequest.ProtoReflect.Descriptor instead.
-func (*LoginRequest) Descriptor() ([]byte, []int) {
-	return file_sso_sso_proto_rawDescGZIP(), []int{2}
-}
-
-func (x *LoginRequest) GetLogin() string {
-	if x != nil {
-		return x.Login
-	}
-	return ""
-}
-
-func (x *LoginRequest) GetPassword() string {
-	if x != nil {
-		return x.Password
-	}
-	return ""
-}
-
-type LoginResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Token         string                 `protobuf:"bytes,1,opt,name=token,proto3" json:"token,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *LoginResponse) Reset() {
-	*x = LoginResponse{}
-	mi := &file_sso_sso_proto_msgTypes[3]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *LoginResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*LoginResponse) ProtoMessage() {}
-
-func (x *LoginResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_sso_sso_proto_msgTypes[3]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use LoginResponse.ProtoReflect.Descriptor instead.
-func (*LoginResponse) Descriptor() ([]byte, []int) {
-	return file_sso_sso_proto_rawDescGZIP(), []int{3}
-}
-
-func (x *LoginResponse) GetToken() string {
-	if x != nil {
-		return x.Token
-	}
-	return ""
-}
-
-// Сообщения для работы с выражениями (Оркестратор)
-type ExpressionRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Expression    string                 `protobuf:"bytes,1,opt,name=expression,proto3" json:"expression,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *ExpressionRequest) Reset() {
-	*x = ExpressionRequest{}
-	mi := &file_sso_sso_proto_msgTypes[4]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ExpressionRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ExpressionRequest) ProtoMessage() {}
-
-func (x *ExpressionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_sso_sso_proto_msgTypes[4]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ExpressionRequest.ProtoReflect.Descriptor instead.
-func (*ExpressionRequest) Descriptor() ([]byte, []int) {
-	return file_sso_sso_proto_rawDescGZIP(), []int{4}
-}
-
-func (x *ExpressionRequest) GetExpression() string {
-	if x != nil {
-		return x.Expression
-	}
-	return ""
-}
-
-type ExpressionResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Status        string                 `protobuf:"bytes,1,opt,name=status,proto3" json:"status,omitempty"`
-	Result        string                 `protobuf:"bytes,2,opt,name=result,proto3" json:"result,omitempty"`
-	Error         string                 `protobuf:"bytes,3,opt,name=error,proto3" json:"error,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *ExpressionResponse) Reset() {
-	*x = ExpressionResponse{}
-	mi := &file_sso_sso_proto_msgTypes[5]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ExpressionResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ExpressionResponse) ProtoMessage() {}
-
-func (x *ExpressionResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_sso_sso_proto_msgTypes[5]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ExpressionResponse.ProtoReflect.Descriptor instead.
-func (*ExpressionResponse) Descriptor() ([]byte, []int) {
-	return file_sso_sso_proto_rawDescGZIP(), []int{5}
-}
-
-func (x *ExpressionResponse) GetStatus() string {
-	if x != nil {
-		return x.Status
-	}
-	return ""
-}
-
-func (x *ExpressionResponse) GetResult() string {
-	if x != nil {
-		return x.Result
-	}
-	return ""
-}
-
-func (x *ExpressionResponse) GetError() string {
-	if x != nil {
-		return x.Error
-	}
-	return ""
-}
-
-// Сообщения для задач (Оркестратор и Агент)
-type TaskRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	UserId        int64                  `protobuf:"varint,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *TaskRequest) Reset() {
-	*x = TaskRequest{}
-	mi := &file_sso_sso_proto_msgTypes[6]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *TaskRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*TaskRequest) ProtoMessage() {}
-
-func (x *TaskRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_sso_sso_proto_msgTypes[6]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use TaskRequest.ProtoReflect.Descriptor instead.
-func (*TaskRequest) Descriptor() ([]byte, []int) {
-	return file_sso_sso_proto_rawDescGZIP(), []int{6}
-}
-
-func (x *TaskRequest) GetUserId() int64 {
-	if x != nil {
-		return x.UserId
-	}
-	return 0
-}
-
-type TaskResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	TaskId        int64                  `protobuf:"varint,1,opt,name=task_id,json=taskId,proto3" json:"task_id,omitempty"`
+	Id            int32                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
 	Arg1          float64                `protobuf:"fixed64,2,opt,name=arg1,proto3" json:"arg1,omitempty"`
 	Arg2          float64                `protobuf:"fixed64,3,opt,name=arg2,proto3" json:"arg2,omitempty"`
 	Operation     string                 `protobuf:"bytes,4,opt,name=operation,proto3" json:"operation,omitempty"`
@@ -383,21 +32,21 @@ type TaskResponse struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *TaskResponse) Reset() {
-	*x = TaskResponse{}
-	mi := &file_sso_sso_proto_msgTypes[7]
+func (x *Task) Reset() {
+	*x = Task{}
+	mi := &file_sso_sso_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *TaskResponse) String() string {
+func (x *Task) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*TaskResponse) ProtoMessage() {}
+func (*Task) ProtoMessage() {}
 
-func (x *TaskResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_sso_sso_proto_msgTypes[7]
+func (x *Task) ProtoReflect() protoreflect.Message {
+	mi := &file_sso_sso_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -408,69 +57,67 @@ func (x *TaskResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use TaskResponse.ProtoReflect.Descriptor instead.
-func (*TaskResponse) Descriptor() ([]byte, []int) {
-	return file_sso_sso_proto_rawDescGZIP(), []int{7}
+// Deprecated: Use Task.ProtoReflect.Descriptor instead.
+func (*Task) Descriptor() ([]byte, []int) {
+	return file_sso_sso_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *TaskResponse) GetTaskId() int64 {
+func (x *Task) GetId() int32 {
 	if x != nil {
-		return x.TaskId
+		return x.Id
 	}
 	return 0
 }
 
-func (x *TaskResponse) GetArg1() float64 {
+func (x *Task) GetArg1() float64 {
 	if x != nil {
 		return x.Arg1
 	}
 	return 0
 }
 
-func (x *TaskResponse) GetArg2() float64 {
+func (x *Task) GetArg2() float64 {
 	if x != nil {
 		return x.Arg2
 	}
 	return 0
 }
 
-func (x *TaskResponse) GetOperation() string {
+func (x *Task) GetOperation() string {
 	if x != nil {
 		return x.Operation
 	}
 	return ""
 }
 
-func (x *TaskResponse) GetOperationTime() int32 {
+func (x *Task) GetOperationTime() int32 {
 	if x != nil {
 		return x.OperationTime
 	}
 	return 0
 }
 
-type TaskResultRequest struct {
+type GetTaskRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	TaskId        int64                  `protobuf:"varint,1,opt,name=task_id,json=taskId,proto3" json:"task_id,omitempty"`
-	Result        float64                `protobuf:"fixed64,2,opt,name=result,proto3" json:"result,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *TaskResultRequest) Reset() {
-	*x = TaskResultRequest{}
-	mi := &file_sso_sso_proto_msgTypes[8]
+func (x *GetTaskRequest) Reset() {
+	*x = GetTaskRequest{}
+	mi := &file_sso_sso_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *TaskResultRequest) String() string {
+func (x *GetTaskRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*TaskResultRequest) ProtoMessage() {}
+func (*GetTaskRequest) ProtoMessage() {}
 
-func (x *TaskResultRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_sso_sso_proto_msgTypes[8]
+func (x *GetTaskRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_sso_sso_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -481,47 +128,128 @@ func (x *TaskResultRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use TaskResultRequest.ProtoReflect.Descriptor instead.
-func (*TaskResultRequest) Descriptor() ([]byte, []int) {
-	return file_sso_sso_proto_rawDescGZIP(), []int{8}
+// Deprecated: Use GetTaskRequest.ProtoReflect.Descriptor instead.
+func (*GetTaskRequest) Descriptor() ([]byte, []int) {
+	return file_sso_sso_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *TaskResultRequest) GetTaskId() int64 {
+type GetTaskResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Task          *Task                  `protobuf:"bytes,1,opt,name=task,proto3" json:"task,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetTaskResponse) Reset() {
+	*x = GetTaskResponse{}
+	mi := &file_sso_sso_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetTaskResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetTaskResponse) ProtoMessage() {}
+
+func (x *GetTaskResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_sso_sso_proto_msgTypes[2]
 	if x != nil {
-		return x.TaskId
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetTaskResponse.ProtoReflect.Descriptor instead.
+func (*GetTaskResponse) Descriptor() ([]byte, []int) {
+	return file_sso_sso_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *GetTaskResponse) GetTask() *Task {
+	if x != nil {
+		return x.Task
+	}
+	return nil
+}
+
+type SubmitResultRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            int32                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Result        float64                `protobuf:"fixed64,2,opt,name=result,proto3" json:"result,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SubmitResultRequest) Reset() {
+	*x = SubmitResultRequest{}
+	mi := &file_sso_sso_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SubmitResultRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SubmitResultRequest) ProtoMessage() {}
+
+func (x *SubmitResultRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_sso_sso_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SubmitResultRequest.ProtoReflect.Descriptor instead.
+func (*SubmitResultRequest) Descriptor() ([]byte, []int) {
+	return file_sso_sso_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *SubmitResultRequest) GetId() int32 {
+	if x != nil {
+		return x.Id
 	}
 	return 0
 }
 
-func (x *TaskResultRequest) GetResult() float64 {
+func (x *SubmitResultRequest) GetResult() float64 {
 	if x != nil {
 		return x.Result
 	}
 	return 0
 }
 
-type TaskResultResponse struct {
+type SubmitResultResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Status        string                 `protobuf:"bytes,1,opt,name=status,proto3" json:"status,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *TaskResultResponse) Reset() {
-	*x = TaskResultResponse{}
-	mi := &file_sso_sso_proto_msgTypes[9]
+func (x *SubmitResultResponse) Reset() {
+	*x = SubmitResultResponse{}
+	mi := &file_sso_sso_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *TaskResultResponse) String() string {
+func (x *SubmitResultResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*TaskResultResponse) ProtoMessage() {}
+func (*SubmitResultResponse) ProtoMessage() {}
 
-func (x *TaskResultResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_sso_sso_proto_msgTypes[9]
+func (x *SubmitResultResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_sso_sso_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -532,65 +260,32 @@ func (x *TaskResultResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use TaskResultResponse.ProtoReflect.Descriptor instead.
-func (*TaskResultResponse) Descriptor() ([]byte, []int) {
-	return file_sso_sso_proto_rawDescGZIP(), []int{9}
-}
-
-func (x *TaskResultResponse) GetStatus() string {
-	if x != nil {
-		return x.Status
-	}
-	return ""
+// Deprecated: Use SubmitResultResponse.ProtoReflect.Descriptor instead.
+func (*SubmitResultResponse) Descriptor() ([]byte, []int) {
+	return file_sso_sso_proto_rawDescGZIP(), []int{4}
 }
 
 var File_sso_sso_proto protoreflect.FileDescriptor
 
 const file_sso_sso_proto_rawDesc = "" +
 	"\n" +
-	"\rsso/sso.proto\x12\x03sso\"_\n" +
-	"\x0fRegisterRequest\x12\x14\n" +
-	"\x05email\x18\x01 \x01(\tR\x05email\x12\x1a\n" +
-	"\busername\x18\x02 \x01(\tR\busername\x12\x1a\n" +
-	"\bpassword\x18\x03 \x01(\tR\bpassword\"+\n" +
-	"\x10RegisterResponse\x12\x17\n" +
-	"\auser_id\x18\x01 \x01(\x03R\x06userId\"@\n" +
-	"\fLoginRequest\x12\x14\n" +
-	"\x05login\x18\x01 \x01(\tR\x05login\x12\x1a\n" +
-	"\bpassword\x18\x02 \x01(\tR\bpassword\"%\n" +
-	"\rLoginResponse\x12\x14\n" +
-	"\x05token\x18\x01 \x01(\tR\x05token\"3\n" +
-	"\x11ExpressionRequest\x12\x1e\n" +
-	"\n" +
-	"expression\x18\x01 \x01(\tR\n" +
-	"expression\"Z\n" +
-	"\x12ExpressionResponse\x12\x16\n" +
-	"\x06status\x18\x01 \x01(\tR\x06status\x12\x16\n" +
-	"\x06result\x18\x02 \x01(\tR\x06result\x12\x14\n" +
-	"\x05error\x18\x03 \x01(\tR\x05error\"&\n" +
-	"\vTaskRequest\x12\x17\n" +
-	"\auser_id\x18\x01 \x01(\x03R\x06userId\"\x94\x01\n" +
-	"\fTaskResponse\x12\x17\n" +
-	"\atask_id\x18\x01 \x01(\x03R\x06taskId\x12\x12\n" +
+	"\rsso/sso.proto\x12\x03sso\"\x83\x01\n" +
+	"\x04Task\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x05R\x02id\x12\x12\n" +
 	"\x04arg1\x18\x02 \x01(\x01R\x04arg1\x12\x12\n" +
 	"\x04arg2\x18\x03 \x01(\x01R\x04arg2\x12\x1c\n" +
 	"\toperation\x18\x04 \x01(\tR\toperation\x12%\n" +
-	"\x0eoperation_time\x18\x05 \x01(\x05R\roperationTime\"D\n" +
-	"\x11TaskResultRequest\x12\x17\n" +
-	"\atask_id\x18\x01 \x01(\x03R\x06taskId\x12\x16\n" +
-	"\x06result\x18\x02 \x01(\x01R\x06result\",\n" +
-	"\x12TaskResultResponse\x12\x16\n" +
-	"\x06status\x18\x01 \x01(\tR\x06status2v\n" +
-	"\vAuthService\x127\n" +
-	"\bRegister\x12\x14.sso.RegisterRequest\x1a\x15.sso.RegisterResponse\x12.\n" +
-	"\x05Login\x12\x11.sso.LoginRequest\x1a\x12.sso.LoginResponse2\xcf\x01\n" +
-	"\x13OrchestratorService\x12C\n" +
-	"\x10SubmitExpression\x12\x16.sso.ExpressionRequest\x1a\x17.sso.ExpressionResponse\x12.\n" +
-	"\aGetTask\x12\x10.sso.TaskRequest\x1a\x11.sso.TaskResponse\x12C\n" +
-	"\x10SubmitTaskResult\x12\x16.sso.TaskResultRequest\x1a\x17.sso.TaskResultResponse2\x83\x01\n" +
-	"\fAgentService\x12.\n" +
-	"\aGetTask\x12\x10.sso.TaskRequest\x1a\x11.sso.TaskResponse\x12C\n" +
-	"\x10SubmitTaskResult\x12\x16.sso.TaskResultRequest\x1a\x17.sso.TaskResultResponseB<Z:github.com/nais2008/final_project_go_yandex/internal/protob\x06proto3"
+	"\x0eoperation_time\x18\x05 \x01(\x05R\roperationTime\"\x10\n" +
+	"\x0eGetTaskRequest\"0\n" +
+	"\x0fGetTaskResponse\x12\x1d\n" +
+	"\x04task\x18\x01 \x01(\v2\t.sso.TaskR\x04task\"=\n" +
+	"\x13SubmitResultRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x05R\x02id\x12\x16\n" +
+	"\x06result\x18\x02 \x01(\x01R\x06result\"\x16\n" +
+	"\x14SubmitResultResponse2\x82\x01\n" +
+	"\x05Agent\x124\n" +
+	"\aGetTask\x12\x13.sso.GetTaskRequest\x1a\x14.sso.GetTaskResponse\x12C\n" +
+	"\fSubmitResult\x12\x18.sso.SubmitResultRequest\x1a\x19.sso.SubmitResultResponseB<Z:github.com/nais2008/final_project_go_yandex/internal/protob\x06proto3"
 
 var (
 	file_sso_sso_proto_rawDescOnce sync.Once
@@ -604,39 +299,25 @@ func file_sso_sso_proto_rawDescGZIP() []byte {
 	return file_sso_sso_proto_rawDescData
 }
 
-var file_sso_sso_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
+var file_sso_sso_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
 var file_sso_sso_proto_goTypes = []any{
-	(*RegisterRequest)(nil),    // 0: sso.RegisterRequest
-	(*RegisterResponse)(nil),   // 1: sso.RegisterResponse
-	(*LoginRequest)(nil),       // 2: sso.LoginRequest
-	(*LoginResponse)(nil),      // 3: sso.LoginResponse
-	(*ExpressionRequest)(nil),  // 4: sso.ExpressionRequest
-	(*ExpressionResponse)(nil), // 5: sso.ExpressionResponse
-	(*TaskRequest)(nil),        // 6: sso.TaskRequest
-	(*TaskResponse)(nil),       // 7: sso.TaskResponse
-	(*TaskResultRequest)(nil),  // 8: sso.TaskResultRequest
-	(*TaskResultResponse)(nil), // 9: sso.TaskResultResponse
+	(*Task)(nil),                 // 0: sso.Task
+	(*GetTaskRequest)(nil),       // 1: sso.GetTaskRequest
+	(*GetTaskResponse)(nil),      // 2: sso.GetTaskResponse
+	(*SubmitResultRequest)(nil),  // 3: sso.SubmitResultRequest
+	(*SubmitResultResponse)(nil), // 4: sso.SubmitResultResponse
 }
 var file_sso_sso_proto_depIdxs = []int32{
-	0, // 0: sso.AuthService.Register:input_type -> sso.RegisterRequest
-	2, // 1: sso.AuthService.Login:input_type -> sso.LoginRequest
-	4, // 2: sso.OrchestratorService.SubmitExpression:input_type -> sso.ExpressionRequest
-	6, // 3: sso.OrchestratorService.GetTask:input_type -> sso.TaskRequest
-	8, // 4: sso.OrchestratorService.SubmitTaskResult:input_type -> sso.TaskResultRequest
-	6, // 5: sso.AgentService.GetTask:input_type -> sso.TaskRequest
-	8, // 6: sso.AgentService.SubmitTaskResult:input_type -> sso.TaskResultRequest
-	1, // 7: sso.AuthService.Register:output_type -> sso.RegisterResponse
-	3, // 8: sso.AuthService.Login:output_type -> sso.LoginResponse
-	5, // 9: sso.OrchestratorService.SubmitExpression:output_type -> sso.ExpressionResponse
-	7, // 10: sso.OrchestratorService.GetTask:output_type -> sso.TaskResponse
-	9, // 11: sso.OrchestratorService.SubmitTaskResult:output_type -> sso.TaskResultResponse
-	7, // 12: sso.AgentService.GetTask:output_type -> sso.TaskResponse
-	9, // 13: sso.AgentService.SubmitTaskResult:output_type -> sso.TaskResultResponse
-	7, // [7:14] is the sub-list for method output_type
-	0, // [0:7] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+	0, // 0: sso.GetTaskResponse.task:type_name -> sso.Task
+	1, // 1: sso.Agent.GetTask:input_type -> sso.GetTaskRequest
+	3, // 2: sso.Agent.SubmitResult:input_type -> sso.SubmitResultRequest
+	2, // 3: sso.Agent.GetTask:output_type -> sso.GetTaskResponse
+	4, // 4: sso.Agent.SubmitResult:output_type -> sso.SubmitResultResponse
+	3, // [3:5] is the sub-list for method output_type
+	1, // [1:3] is the sub-list for method input_type
+	1, // [1:1] is the sub-list for extension type_name
+	1, // [1:1] is the sub-list for extension extendee
+	0, // [0:1] is the sub-list for field type_name
 }
 
 func init() { file_sso_sso_proto_init() }
@@ -650,9 +331,9 @@ func file_sso_sso_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_sso_sso_proto_rawDesc), len(file_sso_sso_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   10,
+			NumMessages:   5,
 			NumExtensions: 0,
-			NumServices:   3,
+			NumServices:   1,
 		},
 		GoTypes:           file_sso_sso_proto_goTypes,
 		DependencyIndexes: file_sso_sso_proto_depIdxs,

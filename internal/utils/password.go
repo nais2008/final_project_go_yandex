@@ -1,31 +1,31 @@
 package utils
 
 import (
-	"log"
+	"fmt"
 
 	"golang.org/x/crypto/bcrypt"
 )
 
 // HashPassword ...
-func HashPassword(password string) (string, error) {
+func HashPassword(password string) ([]byte, error) {
+	const op string = "utils.HashPassword"
+
 	hashedPassword, err := bcrypt.GenerateFromPassword(
 		[]byte(password),
 		bcrypt.DefaultCost,
 	)
 
 	if err != nil {
-		log.Fatal("error hash pass")
-
-		return "", err
+		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
-	return string(hashedPassword), nil
+	return hashedPassword, nil
 }
 
 // ComparePasswords ...
-func ComparePasswords(hashedPassword, password string) error {
+func ComparePasswords(hashedPassword []byte, password string) error {
 	return bcrypt.CompareHashAndPassword(
-		[]byte(hashedPassword),
+		hashedPassword,
 		[]byte(password),
 	)
 }

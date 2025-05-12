@@ -1,30 +1,26 @@
 package main
 
 import (
-	"log"
+    "log/slog"
 
-	"github.com/joho/godotenv"
-	"github.com/nais2008/final_project_go_yandex/internal/agent"
-	"github.com/nais2008/final_project_go_yandex/internal/config"
+    "github.com/nais2008/final_project_go_yandex/internal/agent"
+    "github.com/nais2008/final_project_go_yandex/internal/config"
 )
 
 func main() {
-	err := godotenv.Load()
-	if err != nil {
-		log.Println("Error loading .env file")
-	}
+    const op = "main.Agent"
 
-	cfg := config.LoadConfig() // Используем вашу функцию LoadConfig
+    cfg := config.LoadConfig()
+    ag := agent.NewAgent(cfg)
+    if ag == nil {
+        slog.Error(op, "failed to create agent")
+        return
+    }
 
-	// Вы можете добавить логирование конфигурации для отладки
-	log.Printf("Agent Configuration: %+v", cfg)
+    for i := 0; i < cfg.ComputingPower; i++ {
+        go ag.Run()
+    }
 
-	// Создаем экземпляр агента
-	a := agent.NewAgent(cfg)
-
-	// Запускаем агента, используя cfg.GrpcServerAddr для подключения к оркестратору по gRPC
-	log.Printf("Agent starting. Connecting to gRPC server at: %s", cfg.GrpcServerAddr)
-	a.Run()
-
-	// Агент будет работать в бесконечном цикле
+    slog.Info(op, "Agent started", "workers", cfg.ComputingPower)
+    select {}
 }

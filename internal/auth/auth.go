@@ -1,153 +1,77 @@
 package auth
 
 import (
-	"fmt"
-	"log"
 	"net/http"
-	"os"
-	"strings"
-	"time"
 
-	"github.com/golang-jwt/jwt/v4"
-	"github.com/labstack/echo/v4"
-	"github.com/nais2008/final_project_go_yandex/internal/models"
+	"github.com/nais2008/final_project_go_yandex/internal/db"
 	"github.com/nais2008/final_project_go_yandex/internal/utils"
-	"github.com/nais2008/final_project_go_yandex/internal/protos/gen/go/sso"
-	"gorm.io/gorm"
+
+	"github.com/labstack/echo/v4"
 )
 
-type AuthHandler struct {
-	gormDB    *gorm.DB
-	jwtSecret []byte
+// LoginRequest ...
+type LoginRequest struct {
+	Login    string `json:"login" validate:"required"`
+	Password string `json:"password" validate:"required"`
 }
 
-func NewAuthHandler(gormDB *gorm.DB) *AuthHandler {
-	jwtSecret := []byte(os.Getenv("JWT_TOKEN"))
-	if len(jwtSecret) == 0 {
-		log.Fatal("JWT_TOKEN environment variable not set")
-	}
-	return &AuthHandler{
-		gormDB:    gormDB,
-		jwtSecret: jwtSecret,
-	}
+// RegisterRequest ...
+type RegisterRequest struct {
+	Username string `json:"username"`
+	Email    string `json:"email"`
+	Password string `json:"password"`
 }
 
-func (h *AuthHandler) RegisterHandler(c echo.Context) error {
-	if err := c.Request().ParseForm(); err != nil {
-		log.Printf("Error parsing form: %v", err)
-		return echo.NewHTTPError(http.StatusBadRequest, "Invalid form data")
-	}
-
-	email := c.FormValue("email")
-	username := c.FormValue("username")
-	password := c.FormValue("password")
-
-	log.Printf("Form Values - Email: '%s', Username: '%s', Password: '%s'", email, username, password)
-
-	if email == "" || username == "" || password == "" {
-		return echo.NewHTTPError(http.StatusBadRequest, "All fields are required")
-	}
-
-	hashedPassword, err := utils.HashPassword(password)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to hash password")
-	}
-
-	user := models.User{
-		Email:    email,
-		Username: username,
-		Password: hashedPassword,
-	}
-
-	result := h.gormDB.Create(&user)
-	if result.Error != nil {
-		log.Printf("Registration failed: %v", result.Error)
-		return echo.NewHTTPError(http.StatusInternalServerError, "Registration failed")
-	}
-
-	return c.JSON(http.StatusCreated, proto.RegisterResponse{UserId: int64(user.ID)})
-}
-
-
-func (h *AuthHandler) LoginHandler(c echo.Context) error {
-	if err := c.Request().ParseForm(); err != nil {
-		log.Printf("Error parsing form: %v", err)
-		return echo.NewHTTPError(http.StatusBadRequest, "Invalid form data")
-	}
-
-	login := c.FormValue("login")
-	password := c.FormValue("password")
-
-	log.Printf("Login Form Values - Login: '%s', Password: '%s'", login, password)
-
-	if login == "" || password == "" {
-		return echo.NewHTTPError(http.StatusBadRequest, "Login and password are required")
-	}
-
-	var user models.User
-	result := h.gormDB.Where("username = ? OR email = ?", login, login).First(&user)
-	if result.Error != nil {
-		if result.Error == gorm.ErrRecordNotFound {
-			return echo.NewHTTPError(http.StatusUnauthorized, "Invalid credentials")
-		}
-		log.Printf("Login query failed: %v", result.Error)
-		return echo.NewHTTPError(http.StatusInternalServerError, "Login failed")
-	}
-
-	if err := utils.ComparePasswords(user.Password, password); err != nil {
-		return echo.NewHTTPError(http.StatusUnauthorized, "Invalid credentials")
-	}
-
-	token, err := h.generateJWT(int64(user.ID))
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to generate JWT")
-	}
-
-	return c.JSON(http.StatusOK, proto.LoginResponse{Token: token})
-}
-
-func (h *AuthHandler) generateJWT(userID int64) (string, error) {
-	claims := jwt.MapClaims{
-		"user_id": userID,
-		"exp":     time.Now().Add(time.Hour * 24).Unix(),
-	}
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString(h.jwtSecret)
-}
-
-func (h *AuthHandler) AuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
+// LoginUser ...
+func LoginUser(storage *db.Storage) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		tokenStr := c.Request().Header.Get("Authorization")
-		if tokenStr == "" {
-			return echo.NewHTTPError(http.StatusUnauthorized, "Missing authorization header")
+		var req LoginRequest
+
+		if err := c.Bind(&req); err != nil {
+			return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid request format"})
 		}
 
-		parts := strings.Split(tokenStr, " ")
-		if len(parts) != 2 || parts[0] != "Bearer" {
-			return echo.NewHTTPError(http.StatusUnauthorized, "Invalid token format")
-		}
-		tokenStr = parts[1]
-
-		token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
-			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
-			}
-			return h.jwtSecret, nil
-		})
-
+		user, err := storage.User(c.Request().Context(), req.Login)
 		if err != nil {
-			return echo.NewHTTPError(http.StatusUnauthorized, "Invalid token")
+			return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Invalid login or password"})
 		}
 
-		if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-			userIDFloat, ok := claims["user_id"].(float64)
-			if !ok {
-				return echo.NewHTTPError(http.StatusUnauthorized, "Invalid user ID in token")
-			}
-			c.Set("user_id", int64(userIDFloat))
-			return next(c)
+		err = utils.ComparePasswords(user.Password, req.Password)
+		if err != nil {
+			return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Invalid login or password"})
 		}
 
-		return echo.NewHTTPError(http.StatusUnauthorized, "Invalid token")
+		token, err := utils.GenerateJWT(user.Username)
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Error generating token"})
+		}
+
+		return c.JSON(http.StatusOK, map[string]string{"token": token})
 	}
 }
+
+// RegisterUser ...
+func RegisterUser(storage *db.Storage) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		var req RegisterRequest
+
+		if err := c.Bind(&req); err != nil {
+			return c.JSON(http.StatusBadRequest, map[string]string{
+				"error": "Invalid request format: " + err.Error(),
+			})
+		}
+
+		hash, err := utils.HashPassword(req.Password)
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Error hashing password"})
+		}
+
+		_, err = storage.SaveUser(c.Request().Context(), req.Username, req.Email, hash)
+		if err != nil {
+			return c.JSON(http.StatusConflict, map[string]string{"error": err.Error()})
+		}
+
+		return c.JSON(http.StatusCreated, map[string]string{"message": "User registered successfully"})
+	}
+}
+

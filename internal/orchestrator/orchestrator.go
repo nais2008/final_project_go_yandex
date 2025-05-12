@@ -19,13 +19,15 @@ import (
 	"google.golang.org/grpc"
 )
 
+// Orchestrator - ОСНОВНАЯ СТРУКТУРУ В ДАННОМ ПАКЕТЕ
 type Orchestrator struct {
-	pb.UnimplementedOrchestratorServiceServer // Встраиваем пустую реализацию
+	pb.UnimplementedOrchestratorServiceServer
 	cfg                                       config.Config
 	gormDB                                    *gorm.DB
 	mu                                        sync.Mutex
 }
 
+// NewOrchestrator создает основную структуру
 func NewOrchestrator(cfg config.Config, gormDB *gorm.DB) *Orchestrator {
 	return &Orchestrator{
 		cfg:    cfg,
@@ -33,11 +35,12 @@ func NewOrchestrator(cfg config.Config, gormDB *gorm.DB) *Orchestrator {
 	}
 }
 
+// CalculateHandler страница калькулятра )
 func (o *Orchestrator) CalculateHandler(c echo.Context) error {
 	return o.SubmitExpressionHTTP(c)
 }
 
-// SubmitExpressionHTTP обрабатывает HTTP-запрос для отправки выражения.
+// SubmitExpressionHTTP ...
 func (o *Orchestrator) SubmitExpressionHTTP(ctx echo.Context) error {
 	userID := ctx.Get("user_id").(int64)
 	var req pb.ExpressionRequest
@@ -87,81 +90,75 @@ func (o *Orchestrator) SubmitExpression(ctx context.Context, req *pb.ExpressionR
     return &pb.ExpressionResponse{Status: expression.Status}, nil
 }
 
-func (o *Orchestrator) parseExpression(expr string, expressionID uint) ([]models.Task, error) {
+func (o *Orchestrator) parseExpression(expr string) ([]models.Task, error) {
 	expr = strings.ReplaceAll(expr, " ", "")
 	if expr == "" {
-		return nil, fmt.Errorf("empty expression")
+		return nil, strconv.ErrSyntax
 	}
+
 	var tasks []models.Task
-	var numbers []float64
-	var operators []string
-	currentNumber := ""
-	for _, char := range expr {
-		if isDigit(byte(char)) || char == '.' {
-			currentNumber += string(char)
-		} else if char == '+' || char == '-' || char == '*' || char == '/' {
-			if currentNumber != "" {
-				num, err := strconv.ParseFloat(currentNumber, 64)
-				if err != nil {
-					return nil, err
-				}
-				numbers = append(numbers, num)
-				currentNumber = ""
+	numStr := ""
+	nums := []float64{}
+	ops := []string{}
+
+	for i := 0; i <= len(expr); i++ {
+		if i < len(expr) && (isDigit(expr[i]) || expr[i] == '.') {
+			numStr += string(expr[i])
+			continue
+		}
+		if numStr != "" {
+			num, err := strconv.ParseFloat(numStr, 64)
+			if err != nil {
+				return nil, err
 			}
-			operators = append(operators, string(char))
+			nums = append(nums, num)
+			numStr = ""
+		}
+		if i < len(expr) && (expr[i] == '+' || expr[i] == '-' || expr[i] == '*' || expr[i] == '/') {
+			ops = append(ops, string(expr[i]))
+		}
+	}
+
+	// Сначала выполняем умножение и деление
+	for i := 0; i < len(ops); {
+		if ops[i] == "*" || ops[i] == "/" {
+			operationTime := o.getOperationTime(ops[i])
+			task := models.Task{
+				ID:            o.storage.NextTaskID,
+				Arg1:          nums[i],
+				Arg2:          ptr(nums[i+1]),
+				Operation:     ops[i],
+				Status:        "pending",
+				OperationTime: operationTime,
+			}
+			o.storage.NextTaskID++
+			tasks = append(tasks, task)
+			nums[i] = 0 // Пометим как обработанное
+			nums = append(nums[:i+1], nums[i+2:]...)
+			ops = append(ops[:i], ops[i+1:]...)
 		} else {
-			return nil, fmt.Errorf("invalid character: %s", string(char))
+			i++
 		}
 	}
-	if currentNumber != "" {
-		num, err := strconv.ParseFloat(currentNumber, 64)
-		if err != nil {
-			return nil, err
-		}
-		numbers = append(numbers, num)
-	}
-	if len(numbers) != len(operators)+1 {
-		return nil, fmt.Errorf("invalid number of operands/operators")
-	}
-	applyOpAndCreateTask := func(op string, arg1, arg2 float64) {
-		operationTime := o.getOperationTime(op)
+
+	// Затем сложение и вычитание
+	for i := 0; i < len(ops); i++ {
+		operationTime := o.getOperationTime(ops[i])
 		task := models.Task{
-			ExpressionID:  expressionID,
-			Arg1:          arg1,
-			Arg2:          ptr(arg2),
-			Operation:     op,
+			ID:            o.storage.NextTaskID,
+			Arg1:          nums[i],
+			Arg2:          ptr(nums[i+1]),
+			Operation:     ops[i],
 			Status:        "pending",
 			OperationTime: operationTime,
 		}
+		o.storage.NextTaskID++
 		tasks = append(tasks, task)
 	}
-	newNumbers := make([]float64, 0)
-	newNumbers = append(newNumbers, numbers[0])
-	newOperators := make([]string, 0)
-	for i := 0; i < len(operators); i++ {
-		op := operators[i]
-		if op == "*" || op == "/" {
-			arg1 := newNumbers[len(newNumbers)-1]
-			arg2 := numbers[i+1]
-			applyOpAndCreateTask(op, arg1, arg2)
-			result := calculate(arg1, arg2, op)
-			newNumbers[len(newNumbers)-1] = result
-		} else {
-			newNumbers = append(newNumbers, numbers[i+1])
-			newOperators = append(newOperators, op)
-		}
-	}
-	numbers = newNumbers
-	operators = newOperators
-	for i := 0; i < len(operators); i++ {
-		op := operators[i]
-		arg1 := numbers[i]
-		arg2 := numbers[i+1]
-		applyOpAndCreateTask(op, arg1, arg2)
-		numbers[i] = calculate(arg1, arg2, op)
-	}
+
 	return tasks, nil
 }
+
 
 func (o *Orchestrator) getOperationTime(op string) int {
 	switch op {
@@ -189,17 +186,25 @@ func (o *Orchestrator) GetTask(ctx context.Context, req *pb.TaskRequest) (*pb.Ta
 	result := o.gormDB.Where("status = ?", "pending").First(&task)
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
+			log.Println("GetTask: No pending tasks found.")
 			return &pb.TaskResponse{}, nil
 		}
-		log.Printf("Failed to find pending task: %v", result.Error)
+		log.Printf("GetTask: Failed to find pending task: %v", result.Error)
 		return nil, fmt.Errorf("failed to retrieve task: %w", result.Error)
 	}
+
+	log.Printf("GetTask: Found pending task with ID: %d, ExpressionID: %d, Operation: %s", task.ID, task.ExpressionID, task.Operation)
+
 	task.Status = "processing"
-	o.gormDB.Save(&task)
+	if err := o.gormDB.Save(&task).Error; err != nil {
+		log.Printf("GetTask: Failed to update task %d to processing: %v", task.ID, err)
+		return nil, fmt.Errorf("failed to update task status: %w", err)
+	}
+
 	resp := &pb.TaskResponse{
-		TaskId:      int64(task.ID),
-		Arg1:        task.Arg1,
-		Operation:   task.Operation,
+		TaskId:        int64(task.ID),
+		Arg1:          task.Arg1,
+		Operation:     task.Operation,
 		OperationTime: int32(task.OperationTime),
 	}
 	if task.Arg2 != nil {

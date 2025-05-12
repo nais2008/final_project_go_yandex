@@ -19,469 +19,139 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	AuthService_Register_FullMethodName = "/sso.AuthService/Register"
-	AuthService_Login_FullMethodName    = "/sso.AuthService/Login"
+	Agent_GetTask_FullMethodName      = "/sso.Agent/GetTask"
+	Agent_SubmitResult_FullMethodName = "/sso.Agent/SubmitResult"
 )
 
-// AuthServiceClient is the client API for AuthService service.
+// AgentClient is the client API for Agent service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-//
-// Сервис для аутентификации пользователей (регистрация и авторизация)
-type AuthServiceClient interface {
-	Register(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*RegisterResponse, error)
-	Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*LoginResponse, error)
+type AgentClient interface {
+	GetTask(ctx context.Context, in *GetTaskRequest, opts ...grpc.CallOption) (*GetTaskResponse, error)
+	SubmitResult(ctx context.Context, in *SubmitResultRequest, opts ...grpc.CallOption) (*SubmitResultResponse, error)
 }
 
-type authServiceClient struct {
+type agentClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewAuthServiceClient(cc grpc.ClientConnInterface) AuthServiceClient {
-	return &authServiceClient{cc}
+func NewAgentClient(cc grpc.ClientConnInterface) AgentClient {
+	return &agentClient{cc}
 }
 
-func (c *authServiceClient) Register(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*RegisterResponse, error) {
+func (c *agentClient) GetTask(ctx context.Context, in *GetTaskRequest, opts ...grpc.CallOption) (*GetTaskResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(RegisterResponse)
-	err := c.cc.Invoke(ctx, AuthService_Register_FullMethodName, in, out, cOpts...)
+	out := new(GetTaskResponse)
+	err := c.cc.Invoke(ctx, Agent_GetTask_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *authServiceClient) Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*LoginResponse, error) {
+func (c *agentClient) SubmitResult(ctx context.Context, in *SubmitResultRequest, opts ...grpc.CallOption) (*SubmitResultResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(LoginResponse)
-	err := c.cc.Invoke(ctx, AuthService_Login_FullMethodName, in, out, cOpts...)
+	out := new(SubmitResultResponse)
+	err := c.cc.Invoke(ctx, Agent_SubmitResult_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// AuthServiceServer is the server API for AuthService service.
-// All implementations must embed UnimplementedAuthServiceServer
+// AgentServer is the server API for Agent service.
+// All implementations must embed UnimplementedAgentServer
 // for forward compatibility.
-//
-// Сервис для аутентификации пользователей (регистрация и авторизация)
-type AuthServiceServer interface {
-	Register(context.Context, *RegisterRequest) (*RegisterResponse, error)
-	Login(context.Context, *LoginRequest) (*LoginResponse, error)
-	mustEmbedUnimplementedAuthServiceServer()
+type AgentServer interface {
+	GetTask(context.Context, *GetTaskRequest) (*GetTaskResponse, error)
+	SubmitResult(context.Context, *SubmitResultRequest) (*SubmitResultResponse, error)
+	mustEmbedUnimplementedAgentServer()
 }
 
-// UnimplementedAuthServiceServer must be embedded to have
+// UnimplementedAgentServer must be embedded to have
 // forward compatible implementations.
 //
 // NOTE: this should be embedded by value instead of pointer to avoid a nil
 // pointer dereference when methods are called.
-type UnimplementedAuthServiceServer struct{}
+type UnimplementedAgentServer struct{}
 
-func (UnimplementedAuthServiceServer) Register(context.Context, *RegisterRequest) (*RegisterResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Register not implemented")
-}
-func (UnimplementedAuthServiceServer) Login(context.Context, *LoginRequest) (*LoginResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Login not implemented")
-}
-func (UnimplementedAuthServiceServer) mustEmbedUnimplementedAuthServiceServer() {}
-func (UnimplementedAuthServiceServer) testEmbeddedByValue()                     {}
-
-// UnsafeAuthServiceServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to AuthServiceServer will
-// result in compilation errors.
-type UnsafeAuthServiceServer interface {
-	mustEmbedUnimplementedAuthServiceServer()
-}
-
-func RegisterAuthServiceServer(s grpc.ServiceRegistrar, srv AuthServiceServer) {
-	// If the following call pancis, it indicates UnimplementedAuthServiceServer was
-	// embedded by pointer and is nil.  This will cause panics if an
-	// unimplemented method is ever invoked, so we test this at initialization
-	// time to prevent it from happening at runtime later due to I/O.
-	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
-		t.testEmbeddedByValue()
-	}
-	s.RegisterService(&AuthService_ServiceDesc, srv)
-}
-
-func _AuthService_Register_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(RegisterRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(AuthServiceServer).Register(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: AuthService_Register_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AuthServiceServer).Register(ctx, req.(*RegisterRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _AuthService_Login_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(LoginRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(AuthServiceServer).Login(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: AuthService_Login_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AuthServiceServer).Login(ctx, req.(*LoginRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-// AuthService_ServiceDesc is the grpc.ServiceDesc for AuthService service.
-// It's only intended for direct use with grpc.RegisterService,
-// and not to be introspected or modified (even as a copy)
-var AuthService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "sso.AuthService",
-	HandlerType: (*AuthServiceServer)(nil),
-	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "Register",
-			Handler:    _AuthService_Register_Handler,
-		},
-		{
-			MethodName: "Login",
-			Handler:    _AuthService_Login_Handler,
-		},
-	},
-	Streams:  []grpc.StreamDesc{},
-	Metadata: "sso/sso.proto",
-}
-
-const (
-	OrchestratorService_SubmitExpression_FullMethodName = "/sso.OrchestratorService/SubmitExpression"
-	OrchestratorService_GetTask_FullMethodName          = "/sso.OrchestratorService/GetTask"
-	OrchestratorService_SubmitTaskResult_FullMethodName = "/sso.OrchestratorService/SubmitTaskResult"
-)
-
-// OrchestratorServiceClient is the client API for OrchestratorService service.
-//
-// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-//
-// Сервис оркестратора для работы с выражениями
-type OrchestratorServiceClient interface {
-	SubmitExpression(ctx context.Context, in *ExpressionRequest, opts ...grpc.CallOption) (*ExpressionResponse, error)
-	GetTask(ctx context.Context, in *TaskRequest, opts ...grpc.CallOption) (*TaskResponse, error)
-	SubmitTaskResult(ctx context.Context, in *TaskResultRequest, opts ...grpc.CallOption) (*TaskResultResponse, error)
-}
-
-type orchestratorServiceClient struct {
-	cc grpc.ClientConnInterface
-}
-
-func NewOrchestratorServiceClient(cc grpc.ClientConnInterface) OrchestratorServiceClient {
-	return &orchestratorServiceClient{cc}
-}
-
-func (c *orchestratorServiceClient) SubmitExpression(ctx context.Context, in *ExpressionRequest, opts ...grpc.CallOption) (*ExpressionResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(ExpressionResponse)
-	err := c.cc.Invoke(ctx, OrchestratorService_SubmitExpression_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *orchestratorServiceClient) GetTask(ctx context.Context, in *TaskRequest, opts ...grpc.CallOption) (*TaskResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(TaskResponse)
-	err := c.cc.Invoke(ctx, OrchestratorService_GetTask_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *orchestratorServiceClient) SubmitTaskResult(ctx context.Context, in *TaskResultRequest, opts ...grpc.CallOption) (*TaskResultResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(TaskResultResponse)
-	err := c.cc.Invoke(ctx, OrchestratorService_SubmitTaskResult_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-// OrchestratorServiceServer is the server API for OrchestratorService service.
-// All implementations must embed UnimplementedOrchestratorServiceServer
-// for forward compatibility.
-//
-// Сервис оркестратора для работы с выражениями
-type OrchestratorServiceServer interface {
-	SubmitExpression(context.Context, *ExpressionRequest) (*ExpressionResponse, error)
-	GetTask(context.Context, *TaskRequest) (*TaskResponse, error)
-	SubmitTaskResult(context.Context, *TaskResultRequest) (*TaskResultResponse, error)
-	mustEmbedUnimplementedOrchestratorServiceServer()
-}
-
-// UnimplementedOrchestratorServiceServer must be embedded to have
-// forward compatible implementations.
-//
-// NOTE: this should be embedded by value instead of pointer to avoid a nil
-// pointer dereference when methods are called.
-type UnimplementedOrchestratorServiceServer struct{}
-
-func (UnimplementedOrchestratorServiceServer) SubmitExpression(context.Context, *ExpressionRequest) (*ExpressionResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method SubmitExpression not implemented")
-}
-func (UnimplementedOrchestratorServiceServer) GetTask(context.Context, *TaskRequest) (*TaskResponse, error) {
+func (UnimplementedAgentServer) GetTask(context.Context, *GetTaskRequest) (*GetTaskResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetTask not implemented")
 }
-func (UnimplementedOrchestratorServiceServer) SubmitTaskResult(context.Context, *TaskResultRequest) (*TaskResultResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method SubmitTaskResult not implemented")
+func (UnimplementedAgentServer) SubmitResult(context.Context, *SubmitResultRequest) (*SubmitResultResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SubmitResult not implemented")
 }
-func (UnimplementedOrchestratorServiceServer) mustEmbedUnimplementedOrchestratorServiceServer() {}
-func (UnimplementedOrchestratorServiceServer) testEmbeddedByValue()                             {}
+func (UnimplementedAgentServer) mustEmbedUnimplementedAgentServer() {}
+func (UnimplementedAgentServer) testEmbeddedByValue()               {}
 
-// UnsafeOrchestratorServiceServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to OrchestratorServiceServer will
+// UnsafeAgentServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to AgentServer will
 // result in compilation errors.
-type UnsafeOrchestratorServiceServer interface {
-	mustEmbedUnimplementedOrchestratorServiceServer()
+type UnsafeAgentServer interface {
+	mustEmbedUnimplementedAgentServer()
 }
 
-func RegisterOrchestratorServiceServer(s grpc.ServiceRegistrar, srv OrchestratorServiceServer) {
-	// If the following call pancis, it indicates UnimplementedOrchestratorServiceServer was
+func RegisterAgentServer(s grpc.ServiceRegistrar, srv AgentServer) {
+	// If the following call pancis, it indicates UnimplementedAgentServer was
 	// embedded by pointer and is nil.  This will cause panics if an
 	// unimplemented method is ever invoked, so we test this at initialization
 	// time to prevent it from happening at runtime later due to I/O.
 	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
 		t.testEmbeddedByValue()
 	}
-	s.RegisterService(&OrchestratorService_ServiceDesc, srv)
+	s.RegisterService(&Agent_ServiceDesc, srv)
 }
 
-func _OrchestratorService_SubmitExpression_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ExpressionRequest)
+func _Agent_GetTask_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetTaskRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(OrchestratorServiceServer).SubmitExpression(ctx, in)
+		return srv.(AgentServer).GetTask(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: OrchestratorService_SubmitExpression_FullMethodName,
+		FullMethod: Agent_GetTask_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(OrchestratorServiceServer).SubmitExpression(ctx, req.(*ExpressionRequest))
+		return srv.(AgentServer).GetTask(ctx, req.(*GetTaskRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _OrchestratorService_GetTask_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(TaskRequest)
+func _Agent_SubmitResult_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SubmitResultRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(OrchestratorServiceServer).GetTask(ctx, in)
+		return srv.(AgentServer).SubmitResult(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: OrchestratorService_GetTask_FullMethodName,
+		FullMethod: Agent_SubmitResult_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(OrchestratorServiceServer).GetTask(ctx, req.(*TaskRequest))
+		return srv.(AgentServer).SubmitResult(ctx, req.(*SubmitResultRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _OrchestratorService_SubmitTaskResult_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(TaskResultRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(OrchestratorServiceServer).SubmitTaskResult(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: OrchestratorService_SubmitTaskResult_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(OrchestratorServiceServer).SubmitTaskResult(ctx, req.(*TaskResultRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-// OrchestratorService_ServiceDesc is the grpc.ServiceDesc for OrchestratorService service.
+// Agent_ServiceDesc is the grpc.ServiceDesc for Agent service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var OrchestratorService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "sso.OrchestratorService",
-	HandlerType: (*OrchestratorServiceServer)(nil),
-	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "SubmitExpression",
-			Handler:    _OrchestratorService_SubmitExpression_Handler,
-		},
-		{
-			MethodName: "GetTask",
-			Handler:    _OrchestratorService_GetTask_Handler,
-		},
-		{
-			MethodName: "SubmitTaskResult",
-			Handler:    _OrchestratorService_SubmitTaskResult_Handler,
-		},
-	},
-	Streams:  []grpc.StreamDesc{},
-	Metadata: "sso/sso.proto",
-}
-
-const (
-	AgentService_GetTask_FullMethodName          = "/sso.AgentService/GetTask"
-	AgentService_SubmitTaskResult_FullMethodName = "/sso.AgentService/SubmitTaskResult"
-)
-
-// AgentServiceClient is the client API for AgentService service.
-//
-// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-//
-// Сервис агента для выполнения задач
-type AgentServiceClient interface {
-	GetTask(ctx context.Context, in *TaskRequest, opts ...grpc.CallOption) (*TaskResponse, error)
-	SubmitTaskResult(ctx context.Context, in *TaskResultRequest, opts ...grpc.CallOption) (*TaskResultResponse, error)
-}
-
-type agentServiceClient struct {
-	cc grpc.ClientConnInterface
-}
-
-func NewAgentServiceClient(cc grpc.ClientConnInterface) AgentServiceClient {
-	return &agentServiceClient{cc}
-}
-
-func (c *agentServiceClient) GetTask(ctx context.Context, in *TaskRequest, opts ...grpc.CallOption) (*TaskResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(TaskResponse)
-	err := c.cc.Invoke(ctx, AgentService_GetTask_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *agentServiceClient) SubmitTaskResult(ctx context.Context, in *TaskResultRequest, opts ...grpc.CallOption) (*TaskResultResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(TaskResultResponse)
-	err := c.cc.Invoke(ctx, AgentService_SubmitTaskResult_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-// AgentServiceServer is the server API for AgentService service.
-// All implementations must embed UnimplementedAgentServiceServer
-// for forward compatibility.
-//
-// Сервис агента для выполнения задач
-type AgentServiceServer interface {
-	GetTask(context.Context, *TaskRequest) (*TaskResponse, error)
-	SubmitTaskResult(context.Context, *TaskResultRequest) (*TaskResultResponse, error)
-	mustEmbedUnimplementedAgentServiceServer()
-}
-
-// UnimplementedAgentServiceServer must be embedded to have
-// forward compatible implementations.
-//
-// NOTE: this should be embedded by value instead of pointer to avoid a nil
-// pointer dereference when methods are called.
-type UnimplementedAgentServiceServer struct{}
-
-func (UnimplementedAgentServiceServer) GetTask(context.Context, *TaskRequest) (*TaskResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetTask not implemented")
-}
-func (UnimplementedAgentServiceServer) SubmitTaskResult(context.Context, *TaskResultRequest) (*TaskResultResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method SubmitTaskResult not implemented")
-}
-func (UnimplementedAgentServiceServer) mustEmbedUnimplementedAgentServiceServer() {}
-func (UnimplementedAgentServiceServer) testEmbeddedByValue()                      {}
-
-// UnsafeAgentServiceServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to AgentServiceServer will
-// result in compilation errors.
-type UnsafeAgentServiceServer interface {
-	mustEmbedUnimplementedAgentServiceServer()
-}
-
-func RegisterAgentServiceServer(s grpc.ServiceRegistrar, srv AgentServiceServer) {
-	// If the following call pancis, it indicates UnimplementedAgentServiceServer was
-	// embedded by pointer and is nil.  This will cause panics if an
-	// unimplemented method is ever invoked, so we test this at initialization
-	// time to prevent it from happening at runtime later due to I/O.
-	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
-		t.testEmbeddedByValue()
-	}
-	s.RegisterService(&AgentService_ServiceDesc, srv)
-}
-
-func _AgentService_GetTask_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(TaskRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(AgentServiceServer).GetTask(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: AgentService_GetTask_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AgentServiceServer).GetTask(ctx, req.(*TaskRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _AgentService_SubmitTaskResult_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(TaskResultRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(AgentServiceServer).SubmitTaskResult(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: AgentService_SubmitTaskResult_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AgentServiceServer).SubmitTaskResult(ctx, req.(*TaskResultRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-// AgentService_ServiceDesc is the grpc.ServiceDesc for AgentService service.
-// It's only intended for direct use with grpc.RegisterService,
-// and not to be introspected or modified (even as a copy)
-var AgentService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "sso.AgentService",
-	HandlerType: (*AgentServiceServer)(nil),
+var Agent_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "sso.Agent",
+	HandlerType: (*AgentServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
 			MethodName: "GetTask",
-			Handler:    _AgentService_GetTask_Handler,
+			Handler:    _Agent_GetTask_Handler,
 		},
 		{
-			MethodName: "SubmitTaskResult",
-			Handler:    _AgentService_SubmitTaskResult_Handler,
+			MethodName: "SubmitResult",
+			Handler:    _Agent_SubmitResult_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

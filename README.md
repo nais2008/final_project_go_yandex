@@ -72,17 +72,24 @@
 * Регистрация:
 
   ```bash
-  curl -X POST http://localhost/api/v1/auth/register \
-       -H "Content-Type: application/json" \
-       -d '{"email":"user@example.com","username":"user1","password":"pass"}'
+    curl -X POST http://localhost:8080/api/v1/register \
+    -H "Content-Type: application/json" \
+    -d '{
+        "username": "testuser",
+        "email": "test@example.com",
+        "password": "password123"
+    }'
   ```
 
 * Авторизация:
 
   ```bash
-  curl -X POST http://localhost/api/v1/auth/login \
-       -H "Content-Type: application/json" \
-       -d '{"login":"user1","password":"pass"}'
+  curl -X POST http://localhost:8080/api/v1/login \
+  -H "Content-Type: application/json" \
+  -d '{
+      "login": "testuser",
+      "password": "password123"
+  }'
   ```
 
 * Отправка выражения:
