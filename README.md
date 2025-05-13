@@ -1,6 +1,8 @@
 # final_project_go_yandex
 
-# ЛЮДИ, подождите пожалйста да звастра-послезаватра, честно не успеваю, был на хакатоне, войдите в положение. БУДУ вам очень благодварен. ЭТА надпись пропадет когда готово будет. tg: [@MamaKupiSnikes](https://t.me//MamaKupiSnikers)
+## Благадорю
+
+Благадорю всех кто ждал до сегоднешнего дня и хотел проверить мой проект, но я столкнулся с трудностями в разработке и использованим grpc, если вам будет не турдно, можете подождать до конца недели. Можете ставить 0, я не обижусь, это в принципе справедливо. Мой тг: [@MamaKupiSnikes](https://t.me//MamaKupiSnikers)
 
 ## Описание
 
@@ -95,10 +97,10 @@
 * Отправка выражения:
 
   ```bash
-  curl -X POST http://localhost/api/v1/expressions \
-       -H "Content-Type: application/json" \
-       -H "Authorization: Bearer <TOKEN>" \
-       -d '{"expression":"2+3*4-1/5"}'
+  curl --location --request POST "http://localhost/api/v1/calculate" \
+    --header "Content-Type: application/json" \
+    --header "Authorization: Bearer <TOKEN>" \
+    --data '{"expression": "10 + 5"}'
   ```
 
 * Получение списка выражений:
