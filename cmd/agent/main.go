@@ -1,26 +1,21 @@
 package main
 
 import (
-    "log/slog"
+	"log"
 
-    "github.com/nais2008/final_project_go_yandex/internal/agent"
-    "github.com/nais2008/final_project_go_yandex/internal/config"
+	"github.com/nais2008/final_project_go_yandex/internal/agent"
+	"github.com/nais2008/final_project_go_yandex/internal/config"
 )
 
 func main() {
-    const op = "main.Agent"
-
     cfg := config.LoadConfig()
-    ag := agent.NewAgent(cfg)
-    if ag == nil {
-        slog.Error(op, "failed to create agent")
-        return
-    }
+    computingPower := cfg.ComputingPower
 
-    for i := 0; i < cfg.ComputingPower; i++ {
+    ag := agent.NewAgent(cfg)
+    for i := 0; i < computingPower; i++ {
         go ag.Run()
     }
 
-    slog.Info(op, "Agent started", "workers", cfg.ComputingPower)
+    log.Printf("Agent started with %d workers", computingPower)
     select {}
 }

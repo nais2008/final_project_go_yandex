@@ -1,124 +1,125 @@
 package agent
 
 import (
-	"context"
-	"log/slog"
+	"bytes"
+	"encoding/json"
+	"log"
+	"net/http"
 	"time"
 
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
-
 	"github.com/nais2008/final_project_go_yandex/internal/config"
-	proto "github.com/nais2008/final_project_go_yandex/internal/protos/gen/go/sso"
+	"github.com/nais2008/final_project_go_yandex/internal/db"
+	"github.com/nais2008/final_project_go_yandex/internal/models"
 )
 
 type Agent struct {
-    cfg    config.Config
-    client proto.AgentClient
+	cfg              config.Config
+	s                *db.Storage
+	orchestratorAddr string
 }
 
 func NewAgent(cfg config.Config) *Agent {
-    const op = "agent.NewAgent"
+	st, err := db.ConnectDB()
+	if err != nil {
+		log.Fatal("Failed to connect to database: ", err)
+	}
 
-    ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-    defer cancel()
-
-    conn, err := grpc.DialContext(ctx, cfg.GrpcServerAddr,
-        grpc.WithTransportCredentials(insecure.NewCredentials()),
-        grpc.WithBlock(),
-    )
-    if err != nil {
-        slog.Error(op, "failed to connect to gRPC server", err)
-        return nil
-    }
-
-    client := proto.NewAgentClient(conn)
-
-    slog.Info(op, "agent created")
-
-    return &Agent{cfg: cfg, client: client}
+	return &Agent{cfg: cfg, s: st, orchestratorAddr: cfg.OrchestratorAddr}
 }
 
 func (a *Agent) Run() {
-    const op = "agent.Run"
+	for {
+		task, err := a.getTask()
+		if err != nil {
+			log.Printf("Error getting task: %v", err)
+			time.Sleep(1 * time.Second)
+			continue
+		}
 
-    for {
-        task, err := a.getTask()
-        if err != nil || task == nil {
-            slog.Error(op, "failed to get task", err)
-            time.Sleep(1 * time.Second)
-            continue
-        }
+		if task.ID == 0 {
+			time.Sleep(1 * time.Second)
+			continue
+		}
 
-        result := a.ComputeTask(task)
-        time.Sleep(time.Duration(task.OperationTime) * time.Millisecond)
+		// Проверяем наличие Expression в базе данных
+		var expr models.Expression
+		if err := a.s.DB.First(&expr, task.ExpressionID).Error; err != nil {
+			log.Printf("Expression not found for task %d: %v", task.ID, err)
+			continue
+		}
 
-        a.submitResult(task.Id, result)
-    }
+		// Проверяем статус задачи, если не "pending", то пропускаем её
+		if task.Status != "pending" {
+			log.Printf("Skipping task %d as it is not in 'pending' status", task.ID)
+			continue
+		}
+
+		// Вычисляем результат
+		result := a.ComputeTask(task)
+		task.Result = &result
+		task.Status = "completed"
+
+		// Обновляем задачу в базе данных с результатом
+		if err := a.s.DB.Save(&task).Error; err != nil {
+			log.Printf("Error saving task %d with result: %v", task.ID, err)
+			continue
+		}
+
+		// Ждём указанное время
+		time.Sleep(time.Duration(task.OperationTime) * time.Millisecond)
+
+		a.submitResult(task.ID, result)
+	}
 }
 
-func (a *Agent) getTask() (*proto.Task, error) {
-    const op = "agent.getTask"
+func (a *Agent) getTask() (models.Task, error) {
+    resp, err := http.Get("http://" + a.orchestratorAddr + "/internal/tasks")  // изменено на /internal/tasks
+    if err != nil || resp.StatusCode != http.StatusOK {
+        return models.Task{}, err
+    }
+    defer resp.Body.Close()
 
-    ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-    defer cancel()
-
-    resp, err := a.client.GetTask(ctx, &proto.GetTaskRequest{})
-    if err != nil {
-        slog.Error(op, "failed to get task from server", err)
-        return nil, err
+    var data struct {
+        Task models.Task `json:"task"`
     }
 
-    slog.Info(op, "task received")
+    if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
+        return models.Task{}, err
+    }
 
-    return resp.Task, nil
+    return data.Task, nil
 }
 
-// ComputeTask ...
-func (a *Agent) ComputeTask(task *proto.Task) float64 {
-    const op = "agent.ComputeTask"
-
-    if task.Arg2 == 0 {
-        return task.Arg1
-    }
-
-    var result float64
-
-    switch task.Operation {
-    case "+":
-        result = task.Arg1 + task.Arg2
-    case "-":
-        result = task.Arg1 - task.Arg2
-    case "*":
-        result = task.Arg1 * task.Arg2
-    case "/":
-        if task.Arg2 == 0 {
-            return 0
-        }
-        result = task.Arg1 / task.Arg2
-    default:
-        slog.Warn(op, "unknown operation", "operation", task.Operation)
-        return 0
-    }
-
-    slog.Info(op, "task computed", "result", result)
-    return result
+func (a *Agent) ComputeTask(task models.Task) float64 {
+	if task.Arg2 == nil {
+		return task.Arg1
+	}
+	switch task.Operation {
+	case "+":
+		return task.Arg1 + *task.Arg2
+	case "-":
+		return task.Arg1 - *task.Arg2
+	case "*":
+		return task.Arg1 * *task.Arg2
+	case "/":
+		if *task.Arg2 == 0 {
+			return 0
+		}
+		return task.Arg1 / *task.Arg2
+	default:
+		return 0
+	}
 }
 
-func (a *Agent) submitResult(taskID int32, result float64) {
-    const op = "agent.submitResult"
+func (a *Agent) submitResult(taskID uint, result float64) {
+	payload := map[string]interface{}{
+		"id":     taskID,
+		"result": result,
+	}
+	body, _ := json.Marshal(payload)
 
-    ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-    defer cancel()
-
-    _, err := a.client.SubmitResult(ctx, &proto.SubmitResultRequest{
-        Id:     taskID,
-        Result: result,
-    })
-
-    if err != nil {
-        slog.Error(op, "failed to submit result", err)
-    } else {
-        slog.Info(op, "result submitted", "taskID", taskID)
-    }
+	_, err := http.Post("http://" + a.orchestratorAddr + "/internal/task", "application/json", bytes.NewBuffer(body))
+	if err != nil {
+		log.Printf("Error submitting result for task %d: %v", taskID, err)
+	}
 }

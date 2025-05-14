@@ -11,7 +11,7 @@ import (
 )
 
 type Storage struct{
-	db *gorm.DB
+	DB *gorm.DB
 }
 
 // ConnectDB connected database(psql)
@@ -37,12 +37,10 @@ func ConnectDB() (*Storage, error) {
 
 	if err := db.AutoMigrate(
 		&models.User{},
-		&models.Expression{},
-		&models.Storage{},
 		&models.Task{},
 	); err != nil {
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
-	return &Storage{db: db}, nil
+	return &Storage{DB: db}, nil
 }

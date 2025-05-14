@@ -32,7 +32,7 @@ func (s *Storage) SaveUser(
 		Password: passHash,
 	}
 
-	res := s.db.WithContext(ctx).Create(&user)
+	res := s.DB.WithContext(ctx).Create(&user)
 
 	if res.Error != nil {
 		if isDuplicateError(res.Error, "email") {
@@ -62,7 +62,7 @@ func (s *Storage) User(
 	const op string = "db.User"
 
 	var user models.User
-	err := s.db.WithContext(ctx).Where(
+	err := s.DB.WithContext(ctx).Where(
 		"email = ? OR username = ?", login, login,
 	).First(&user).Error
 	if err != nil {

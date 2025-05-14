@@ -15,7 +15,7 @@ type Config struct {
 	TimeMultiplicationMS int
 	TimeDivisionMS       int
 	ComputingPower       int
-	GrpcServerAddr       string
+	AgentAddr       string
 	OrchestratorAddr 		 string
 }
 
@@ -42,7 +42,7 @@ func LoadConfig() Config {
 		TimeMultiplicationMS: loadEnvInt("TIME_MULTIPLICATIONS_MS", 5000),
 		TimeDivisionMS:       loadEnvInt("TIME_DIVISIONS_MS", 5000),
 		ComputingPower:       loadEnvInt("COMPUTING_POWER", 4),
-		GrpcServerAddr:       loadEnvString("GRPC_SERVER_ADDR", "localhost:50051"),
+		AgentAddr:            loadEnvString("AGENT_ADDR", "localhost:8081"),
 		OrchestratorAddr:     loadEnvString("ORCHESTRATOR_ADDR", "localhost:8080"),
 	}
 

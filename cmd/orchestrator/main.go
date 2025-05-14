@@ -7,10 +7,12 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 
+	"github.com/nais2008/final_project_go_yandex/internal/auth"
 	"github.com/nais2008/final_project_go_yandex/internal/config"
 	"github.com/nais2008/final_project_go_yandex/internal/db"
-	"github.com/nais2008/final_project_go_yandex/internal/auth"
+	"github.com/nais2008/final_project_go_yandex/internal/orchestrator"
 	"github.com/nais2008/final_project_go_yandex/internal/renderer"
+	customMiddleware "github.com/nais2008/final_project_go_yandex/internal/middleware"
 )
 
 func main() {
@@ -30,7 +32,7 @@ func main() {
 	e.Use(middleware.Recover())
 
 
-	// orch := orchestrator.NewOrchestrator(cfg, gormDB)
+	orch := orchestrator.NewOrchestrator(cfg, storage)
 
 	// Routes
 	e.GET("/", func(c echo.Context) error {
@@ -40,16 +42,15 @@ func main() {
 	e.POST("/api/v1/register", auth.RegisterUser(storage))
 	e.POST("/api/v1/login", auth.LoginUser(storage))
 
-	// api := e.Group("/api/v1")
-	// api.Use(authHandler.AuthMiddleware)
-	// api.POST("/calculate", orch.CalculateHandler)
-	// api.GET("/expressions", orch.GetExpressionsHandler)
-	// api.GET("/expressions/:id", orch.GetExpressionByIDHandler)
+	api := e.Group("/api/v1")
+	api.Use(customMiddleware.AuthMiddleware(storage))
+	api.POST("/calculate", orch.CalculateHandler)
+	api.GET("/expressions", orch.GetExpressionsHandler)
+	api.GET("/expressions/:id", orch.GetExpressionByIDHandler)
 
-	// internal := e.Group("/api/v1/internal")
-	// internal.Use(authHandler.AuthMiddleware)
-	// internal.GET("/task", orch.TaskGetHandler)
-	// internal.POST("/task", orch.TaskPostHandler)
+	internal := e.Group("/internal")
+	internal.GET("/tasks", orch.TaskHandler)
+	internal.POST("/tasks", orch.TaskHandler)
 
 	log.Printf("Orchestrator listening on %s", cfg.OrchestratorAddr)
 	log.Fatal(e.Start(cfg.OrchestratorAddr))
