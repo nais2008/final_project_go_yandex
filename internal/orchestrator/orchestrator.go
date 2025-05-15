@@ -1,6 +1,7 @@
 package orchestrator
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -59,68 +60,103 @@ func (o *Orchestrator) CalculateHandler(c echo.Context) error {
 
 func (o *Orchestrator) parseExpression(expr string) ([]models.Task, error) {
 	expr = strings.ReplaceAll(expr, " ", "")
+
 	if expr == "" {
 		return nil, strconv.ErrSyntax
 	}
 
-	var tasks []models.Task
+	isDigit := func(ch byte) bool {
+		return (ch >= '0' && ch <= '9')
+	}
+
 	numStr := ""
 	nums := []float64{}
 	ops := []string{}
 
-	for i := 0; i <= len(expr); i++ {
-		if i < len(expr) && (isDigit(expr[i]) || expr[i] == '.') {
-			numStr += string(expr[i])
-			continue
-		}
-		if numStr != "" {
+	for i := 0; i < len(expr); i++ {
+		ch := expr[i]
+		if isDigit(ch) || ch == '.' {
+			numStr += string(ch)
+		} else if ch == '+' || ch == '-' || ch == '*' || ch == '/' {
+			if numStr == "" {
+				return nil, fmt.Errorf("ошибка парсинга: ожидается число перед оператором в позиции %d", i)
+			}
 			num, err := strconv.ParseFloat(numStr, 64)
 			if err != nil {
 				return nil, err
 			}
 			nums = append(nums, num)
 			numStr = ""
-		}
-		if i < len(expr) && (expr[i] == '+' || expr[i] == '-' || expr[i] == '*' || expr[i] == '/') {
-			ops = append(ops, string(expr[i]))
+			ops = append(ops, string(ch))
+		} else {
+			return nil, fmt.Errorf("неизвестный символ: %c", ch)
 		}
 	}
+	if numStr == "" {
+		return nil, fmt.Errorf("ошибка парсинга: выражение заканчивается на оператор")
+	}
+	lastNum, err := strconv.ParseFloat(numStr, 64)
+	if err != nil {
+		return nil, err
+	}
+	nums = append(nums, lastNum)
 
-	// Сначала выполняем умножение и деление
-	for i := 0; i < len(ops); {
-		if ops[i] == "*" || ops[i] == "/" {
-			operationTime := o.getOperationTime(ops[i])
-			task := models.Task{
-				Arg1:          nums[i],
-				Arg2:          ptr(nums[i+1]),
-				Operation:     ops[i],
+	tasks := make([]models.Task, 0)
+
+	// Первый проход: умножение и деление
+	tempNums := make([]float64, 0)
+	tempNums = append(tempNums, nums[0])
+	for i, op := range ops {
+		if op == "*" || op == "/" {
+			operationTime := o.getOperationTime(op)
+			arg1 := tempNums[len(tempNums)-1]
+			arg2 := nums[i+1]
+			tasks = append(tasks, models.Task{
+				Arg1:          arg1,
+				Arg2:          ptr(arg2),
+				Operation:     op,
 				Status:        "pending",
 				OperationTime: operationTime,
-			}
-			tasks = append(tasks, task)
-			nums[i] = 0 // Пометим как обработанное
-			nums = append(nums[:i+1], nums[i+2:]...)
-			ops = append(ops[:i], ops[i+1:]...)
+			})
+			// Здесь мы *не* выполняем операцию, а просто создаем задачу.
+			// Результат будет обработан позже оркестратором.
+			tempNums = append(tempNums[:len(tempNums)-1], 0) // Заглушка, фактическое значение не важно
+			tempNums = append(tempNums, 0)                 // Заглушка
 		} else {
-			i++
+			tempNums = append(tempNums, nums[i+1])
 		}
 	}
 
-	// Затем сложение и вычитание
-	for i := 0; i < len(ops); i++ {
-		operationTime := o.getOperationTime(ops[i])
-		task := models.Task{
-			Arg1:          nums[i],
-			Arg2:          ptr(nums[i+1]),
-			Operation:     ops[i],
+	// Второй проход: сложение и вычитание
+	newNums := make([]float64, 0)
+	newNums = append(newNums, nums[0])
+	newOps := make([]string, 0)
+	for i, op := range ops {
+		if op == "+" || op == "-" {
+			newNums = append(newNums, nums[i+1])
+			newOps = append(newOps, op)
+		} else {
+			// Пропускаем * и /, они уже обработаны
+		}
+	}
+
+	// Создаем задачи для сложения и вычитания
+	for i, op := range newOps {
+		operationTime := o.getOperationTime(op)
+		arg1 := newNums[i] // Обратите внимание на индексы
+		arg2 := newNums[i+1]
+		tasks = append(tasks, models.Task{
+			Arg1:          arg1,
+			Arg2:          ptr(arg2),
+			Operation:     op,
 			Status:        "pending",
 			OperationTime: operationTime,
-		}
-		tasks = append(tasks, task)
+		})
 	}
 
 	return tasks, nil
 }
+
 
 func (o *Orchestrator) getOperationTime(op string) int {
 	switch op {
@@ -134,10 +170,6 @@ func (o *Orchestrator) getOperationTime(op string) int {
 		return o.cfg.TimeDivisionMS
 	}
 	return 0
-}
-
-func isDigit(b byte) bool {
-	return b >= '0' && b <= '9'
 }
 
 func ptr(f float64) *float64 { return &f }
@@ -192,30 +224,30 @@ func (o *Orchestrator) TaskHandler(c echo.Context) error {
 }
 
 func (o *Orchestrator) updateExpressionStatus(expr *models.Expression) {
-	var tasks []models.Task
-	o.storage.DB.Where("expression_id = ?", expr.ID).Find(&tasks)
+	if len(expr.Tasks) == 0 {
+		o.storage.DB.Model(expr).Update("status", "pending").Update("result", nil)
+		return
+	}
 
 	completed := true
-	for _, task := range tasks {
+	for _, task := range expr.Tasks {
 		if task.Status != "completed" || task.Result == nil {
 			completed = false
 			break
 		}
 	}
 
-	if completed && len(tasks) > 0 {
-		result := o.computeFinalResult(tasks)
-		expr.Result = &result
-		expr.Status = "completed"
-	} else if len(tasks) > 0 {
-		expr.Status = "in_progress"
+	if completed {
+		result := o.computeFinalResult(expr.Tasks)
+		o.storage.DB.Model(expr).Updates(map[string]interface{}{
+			"status": "completed",
+			"result": result,
+		})
 	} else {
-		expr.Status = "pending"
-		expr.Result = nil
+		o.storage.DB.Model(expr).Update("status", "in_progress")
 	}
-
-	o.storage.DB.Save(expr)
 }
+
 
 func (o *Orchestrator) computeFinalResult(tasks []models.Task) float64 {
 	result := tasks[0].Arg1

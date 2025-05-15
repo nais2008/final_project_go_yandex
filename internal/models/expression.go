@@ -20,6 +20,7 @@ type Task struct {
 	Status        string     `gorm:"not null;default:'pending'"`
 	Result        *float64   `gorm:"default:null"`
 	OperationTime int        `gorm:"not null"`
+	Order         int        `gorm:"not null;default:0"`
 	ExpressionID  uint     	 `gorm:"not null"`
 	Expression    Expression `gorm:"foreignKey:ExpressionID"`
 }

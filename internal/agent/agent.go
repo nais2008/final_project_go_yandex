@@ -118,7 +118,7 @@ func (a *Agent) submitResult(taskID uint, result float64) {
 	}
 	body, _ := json.Marshal(payload)
 
-	_, err := http.Post("http://" + a.orchestratorAddr + "/internal/task", "application/json", bytes.NewBuffer(body))
+	_, err := http.Post("http://" + a.orchestratorAddr + "/internal/tasks", "application/json", bytes.NewBuffer(body))
 	if err != nil {
 		log.Printf("Error submitting result for task %d: %v", taskID, err)
 	}
