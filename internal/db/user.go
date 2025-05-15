@@ -13,7 +13,9 @@ import (
 )
 
 var (
+	// ErrUserEmailExists ...
 	ErrUserEmailExists  = errors.New("user with this email already exists")
+	// ErrUsernameExists ...
 	ErrUsernameExists   = errors.New("user with this username already exists")
 )
 

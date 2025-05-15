@@ -12,12 +12,14 @@ import (
 	"github.com/nais2008/final_project_go_yandex/internal/models"
 )
 
+// Agent ...
 type Agent struct {
 	cfg              config.Config
 	s                *db.Storage
 	orchestratorAddr string
 }
 
+// NewAgent ...
 func NewAgent(cfg config.Config) *Agent {
 	st, err := db.ConnectDB()
 	if err != nil {
@@ -27,6 +29,7 @@ func NewAgent(cfg config.Config) *Agent {
 	return &Agent{cfg: cfg, s: st, orchestratorAddr: cfg.OrchestratorAddr}
 }
 
+// Run ...
 func (a *Agent) Run() {
 	for {
 		task, err := a.getTask()
@@ -41,31 +44,26 @@ func (a *Agent) Run() {
 			continue
 		}
 
-		// Проверяем наличие Expression в базе данных
 		var expr models.Expression
 		if err := a.s.DB.First(&expr, task.ExpressionID).Error; err != nil {
 			log.Printf("Expression not found for task %d: %v", task.ID, err)
 			continue
 		}
 
-		// Проверяем статус задачи, если не "pending", то пропускаем её
 		if task.Status != "pending" {
 			log.Printf("Skipping task %d as it is not in 'pending' status", task.ID)
 			continue
 		}
 
-		// Вычисляем результат
 		result := a.ComputeTask(task)
 		task.Result = &result
 		task.Status = "completed"
 
-		// Обновляем задачу в базе данных с результатом
 		if err := a.s.DB.Save(&task).Error; err != nil {
 			log.Printf("Error saving task %d with result: %v", task.ID, err)
 			continue
 		}
 
-		// Ждём указанное время
 		time.Sleep(time.Duration(task.OperationTime) * time.Millisecond)
 
 		a.submitResult(task.ID, result)
@@ -73,7 +71,7 @@ func (a *Agent) Run() {
 }
 
 func (a *Agent) getTask() (models.Task, error) {
-    resp, err := http.Get("http://" + a.orchestratorAddr + "/internal/tasks")  // изменено на /internal/tasks
+    resp, err := http.Get("http://" + a.orchestratorAddr + "/internal/tasks")
     if err != nil || resp.StatusCode != http.StatusOK {
         return models.Task{}, err
     }
@@ -90,6 +88,7 @@ func (a *Agent) getTask() (models.Task, error) {
     return data.Task, nil
 }
 
+// ComputeTask ...
 func (a *Agent) ComputeTask(task models.Task) float64 {
 	if task.Arg2 == nil {
 		return task.Arg1

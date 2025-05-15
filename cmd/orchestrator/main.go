@@ -25,7 +25,6 @@ func main() {
 
 	e := echo.New()
 
-	// base settings
 	e.Renderer = renderer.NewRenderer("templates/*.html")
 	e.Static("/static", "../../static")
 	e.Use(middleware.Logger())
@@ -34,7 +33,6 @@ func main() {
 
 	orch := orchestrator.NewOrchestrator(cfg, storage)
 
-	// Routes
 	e.GET("/", func(c echo.Context) error {
 		return c.Render(http.StatusOK, "index.html", nil)
 	})

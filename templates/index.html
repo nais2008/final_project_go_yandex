@@ -43,7 +43,7 @@
 
         <div id="calculator" class="hidden space-y-6">
             <h2 class="text-xl font-semibold mb-4">Calculate Expression</h2>
-            <form hx-post="/api/v1/expressions" hx-target="#result" hx-swap="innerHTML">
+            <form id="expressionForm" hx-post="/api/v1/expressions" hx-target="#result" hx-swap="outerHTML">
                 <input type="text" name="expression" placeholder="2+3*4-1/5" required class="w-full p-3 border rounded" />
                 <button type="submit" class="w-full py-3 bg-purple-600 text-white rounded">Compute</button>
             </form>
@@ -99,41 +99,56 @@
                         authMessages.innerText = 'Произошла непредвиденная ошибка при входе.';
                     }
                 }
+            } else if (detail.requestConfig && detail.xhr.responseURL.includes('/api/v1/expressions')) {
+                if (detail.xhr.status === 201) {
+                    try {
+                        const res = JSON.parse(detail.xhr.responseText);
+                        const expressionId = res.id;
+                        console.log("ID выражения после отправки:", expressionId);
+                        // Запрашиваем детали выражения по ID
+                        htmx.ajax('GET', `/api/v1/expressions/${expressionId}`, {
+                            headers: {
+                                'Authorization': `Bearer ${window.token}`
+                            },
+                            handler: (xhr) => {
+                                if (xhr.status === 200) {
+                                    const expressionData = JSON.parse(xhr.responseText).expression;
+                                    const resultDiv = document.getElementById('result');
+                                    resultDiv.innerHTML = `<h2 class="text-xl font-semibold mb-2">Результат:</h2>
+                                                             <p>Выражение: <span class="font-mono">${expressionData.expr}</span></p>
+                                                             ${expressionData.result !== null ? `<p>Результат: <span class="font-bold">${expressionData.result}</span></p>` : '<p class="italic text-gray-600">Вычисляется...</p>'}`;
+                                } else {
+                                    document.getElementById('result').innerText = 'Ошибка при получении деталей выражения.';
+                                    console.error("Ошибка при получении деталей выражения:", xhr.status, xhr.responseText);
+                                }
+                            }
+                        });
+                    } catch (e) {
+                        document.getElementById('result').innerText = 'Ошибка при обработке ID выражения.';
+                        console.error("Ошибка при обработке ID выражения:", e);
+                    }
+                } else {
+                    try {
+                        const error = JSON.parse(detail.xhr.responseText);
+                        document.getElementById('result').innerText = error.message || 'Ошибка при отправке выражения.';
+                    } catch (e) {
+                        document.getElementById('result').innerText = 'Произошла непредвиденная ошибка при отправке выражения.';
+                    }
+                }
             }
         });
 
         document.body.addEventListener('htmx:configRequest', (event) => {
             const detail = event.detail;
-            const targetIsExpressionForm = detail.target.matches('#calculator form');
+            const isAuthRequest = detail.target.matches('#auth form');
+            const isExpressionRequest = detail.target.matches('#expressionForm');
             const hasToken = !!window.token;
 
-            console.log("htmx:configRequest сработал для:", detail.target.id || detail.target.tagName);
-            console.log("Это форма выражения:", targetIsExpressionForm);
-            console.log("Есть токен:", hasToken);
-            console.log("Текущий токен:", window.token);
-
-            if (targetIsExpressionForm && hasToken) {
+            if (isExpressionRequest && hasToken) {
                 detail.headers['Authorization'] = `Bearer ${window.token}`;
-                console.log("Заголовок Authorization добавлен (configRequest):", detail.headers['Authorization']);
-            } else {
-                console.log("Заголовок Authorization НЕ добавлен (configRequest). Условия не выполнены.");
-            }
-        });
-
-        // Добавим слушатель непосредственно на форму отправки выражения
-        document.getElementById('calculator').addEventListener('htmx:configRequest', (event) => {
-            const detail = event.detail;
-            const hasToken = !!window.token;
-
-            console.log("htmx:configRequest сработал ДЛЯ КАЛЬКУЛЯТОРА:", detail.target.id || detail.target.tagName);
-            console.log("Есть токен (внутри слушателя калькулятора):", hasToken);
-            console.log("Текущий токен (внутри слушателя калькулятора):", window.token);
-
-            if (hasToken) {
-                detail.headers['Authorization'] = `Bearer ${window.token}`;
-                console.log("Заголовок Authorization добавлен (слушатель калькулятора):", detail.headers['Authorization']);
-            } else {
-                console.log("Заголовок Authorization НЕ добавлен (слушатель калькулятора). Нет токена.");
+                console.log("Заголовок Authorization добавлен (configRequest для выражения):", detail.headers['Authorization']);
+            } else if (!isAuthRequest) {
+                console.log("Заголовок Authorization НЕ добавлен (configRequest). Нет токена или это форма авторизации.");
             }
         });
 

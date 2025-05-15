@@ -15,8 +15,8 @@ type Config struct {
 	TimeMultiplicationMS int
 	TimeDivisionMS       int
 	ComputingPower       int
-	AgentAddr       string
-	OrchestratorAddr 		 string
+	AgentAddr            string
+	OrchestratorAddr     string
 }
 
 // PostgresConfig ...
@@ -28,13 +28,23 @@ type PostgresConfig struct {
 	Port     string
 }
 
+var envLoaded bool
+
+func loadEnvOnce() {
+	if !envLoaded {
+		err := godotenv.Load()
+		if err != nil {
+			log.Println("Error loading .env file") // Изменили на Println, чтобы не завершать программу
+		} else {
+			log.Println(".env file loaded successfully")
+		}
+		envLoaded = true
+	}
+}
 
 // LoadConfig ...
 func LoadConfig() Config {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatalf("Error loading .env file")
-	}
+	loadEnvOnce()
 
 	cfg := Config{
 		TimeAdditionMS:       loadEnvInt("TIME_ADDITION_MS", 3000),
@@ -51,10 +61,7 @@ func LoadConfig() Config {
 
 // LoadPostgresConfig ...
 func LoadPostgresConfig() PostgresConfig {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatalf("Error loading .env file")
-	}
+	loadEnvOnce()
 
 	cfg := PostgresConfig{
 		DB:       loadEnvString("POSTGRES_DB", "postgres_db"),
